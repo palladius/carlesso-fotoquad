@@ -1,5 +1,14 @@
+import { dealInto } from './dealer';
+import { createRng } from './rng';
 import { parseTile } from './tiles';
-import type { Action, GameEvent, GameState, Quadrant, StepResult } from './types';
+import {
+  QUADRANTS,
+  type Action,
+  type GameEvent,
+  type GameState,
+  type Quadrant,
+  type StepResult,
+} from './types';
 
 /** Pure reducer: returns a new state and the events the UI should animate. */
 export function reduce(prev: GameState, action: Action): StepResult {
@@ -9,6 +18,7 @@ export function reduce(prev: GameState, action: Action): StepResult {
   switch (action.type) {
     case 'PLACE_TILE':
       place(state, action.gridIndex, events);
+      if (events.length) resolveMatch(state, events, action.now ?? 0);
       break;
     case 'RETURN_TILE':
       giveBack(state, action.quadrant, events);
@@ -48,4 +58,35 @@ function giveBack(state: GameState, quadrant: Quadrant, events: GameEvent[]): vo
   state.tray[quadrant] = null;
   state.trayOrigin[quadrant] = null;
   events.push({ type: 'returned', tileId: id, from: quadrant, to: target });
+}
+
+/** FR-4.5/4.6: if the tray holds a full photo, discard it, refill empty slots and check victory. */
+function resolveMatch(state: GameState, events: GameEvent[], now: number): void {
+  const ids = QUADRANTS.map((q) => state.tray[q]);
+  if (ids.some((t) => t === null)) return;
+  const photos = new Set(ids.map((t) => parseTile(t as string).photoId));
+  if (photos.size !== 1) return;
+  const [photoId] = photos as Set<string>;
+
+  for (const q of QUADRANTS) {
+    state.tray[q] = null;
+    state.trayOrigin[q] = null;
+  }
+  state.solved.push(photoId as string);
+  events.push({ type: 'matched', photoId: photoId as string, tileIds: ids as string[] });
+
+  const empty = state.grid.flatMap((t, i) => (t === null ? [i] : []));
+  const rng = createRng(state.seed, state.rngState);
+  events.push(...dealInto(state, empty, rng));
+  state.rngState = rng.state;
+
+  if (state.solved.length === state.photoIds.length) {
+    state.finishedAt = now;
+    events.push({
+      type: 'won',
+      moves: state.moves,
+      hintsUsed: state.hintsUsed,
+      durationMs: now - state.startedAt,
+    });
+  }
 }
