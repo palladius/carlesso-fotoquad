@@ -15,7 +15,7 @@ Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.m
     - [x] GitHub Pages deploy workflow (Vite `base` configured for `/carlesso-fotoquad/`)
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `9ef485d`
 
-## Phase 2: Pure Game Engine (TDD, DOM-free)
+## Phase 2: Pure Game Engine (TDD, DOM-free) [checkpoint: 126a935]
 - [x] Task: Core types & seeded RNG `3304a0e`
     - [x] Write tests: RNG determinism, `shuffle` reproducibility
     - [x] Implement `rng.ts` (e.g. mulberry32) and `shuffle`
@@ -38,7 +38,7 @@ Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.m
 - [x] Task: State serialisation `126a935`
     - [x] Write tests: `serialize`/`deserialize` round-trip; schema version; invalid input rejected
     - [x] Implement versioned snapshot format
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `126a935`
 
 ## Phase 3: Platform Adapters
 - [ ] Task: Photo manifest loader & packs (FR-1, FR-2)
