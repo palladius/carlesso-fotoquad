@@ -1,0 +1,3 @@
+Task: Solvability-aware dealer
+
+src/engine/dealer.ts: completablePhotos, hasNaturalAdjacency, dealInto (tallest-pile draws, pile re-ordering to guarantee >=1 completable photo, shuffled slot assignment avoiding natural 2x2 blocks). src/engine/tiles.ts extracted. Property tests over 300 seeds x 7 deck sizes.
