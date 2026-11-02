@@ -1,0 +1,3 @@
+Task: Match, discard & refill
+
+reducer.ts resolveMatch: full same-photo tray -> matched event, solved++, tray cleared, dealInto all empty slots (seeded RNG persisted), won event with stats when all solved. match.test.ts includes a bot playing full games over 300 seed/size combos without getting stuck.
