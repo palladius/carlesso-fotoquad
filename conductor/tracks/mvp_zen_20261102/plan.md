@@ -7,9 +7,9 @@ Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.m
     - [x] `npm create vite` (vanilla-ts), `tsconfig` strict, folder layout `src/engine`, `src/platform`, `src/ui`
     - [x] ESLint + Prettier config
     - [x] `justfile` with `dev`, `test`, `coverage`, `build`, `e2e`, `lint`
-- [ ] Task: Testing harness
-    - [ ] Vitest + jsdom + `@vitest/coverage-v8` (80% threshold), smoke test
-    - [ ] Playwright config (mobile portrait 390×844 + desktop 1440×900; system Chrome GPU flags on pupurabbux), smoke e2e
+- [x] Task: Testing harness `18bb0fc`
+    - [x] Vitest + jsdom + `@vitest/coverage-v8` (80% threshold), smoke test
+    - [x] Playwright config (mobile portrait 390×844 + desktop 1440×900; system Chrome GPU flags on pupurabbux), smoke e2e
 - [ ] Task: CI & hosting
     - [ ] GitHub Actions: lint + unit tests + build on PR/push
     - [ ] GitHub Pages deploy workflow (Vite `base` configured for `/carlesso-fotoquad/`)
