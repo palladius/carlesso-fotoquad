@@ -1,0 +1,3 @@
+Task: State serialisation
+
+src/engine/serialize.ts: serialize/deserialize with schema v1 and shape validation; restored games continue identically (RNG state).
