@@ -23,9 +23,9 @@ Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.m
 - [x] Task: Deck building & dealing `5319e11`
     - [x] Write tests: N photos → N×4 tiles; round-robin split into 5 piles; initial 30-slot tableau; <30 tiles case
     - [x] Implement `createGame(photos, seed, options)`
-- [ ] Task: Solvability-aware dealer (FR-5)
-    - [ ] Write property tests over many seeds: visible set always contains ≥1 complete photo while unsolved; no photo laid out in natural 2×2 adjacency
-    - [ ] Implement dealer strategy for initial deal and refills
+- [x] Task: Solvability-aware dealer (FR-5) `3318df4`
+    - [x] Write property tests over many seeds: visible set always contains ≥1 complete photo while unsolved; no photo laid out in natural 2×2 adjacency
+    - [x] Implement dealer strategy for initial deal and refills
 - [ ] Task: Tray mechanics (FR-4.1–4.4)
     - [ ] Write tests: tap grid→tray slot by quadrant; conflict replacement returns old tile to vacated slot; tap tray→grid; move counter
     - [ ] Implement `reduce(state, action)` for `PLACE_TILE`, `RETURN_TILE`
