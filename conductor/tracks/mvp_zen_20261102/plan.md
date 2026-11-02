@@ -3,10 +3,10 @@
 Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.md](../../workflow.md)
 
 ## Phase 1: Scaffolding & Tooling
-- [ ] Task: Initialise Vite + strict TypeScript project
-    - [ ] `npm create vite` (vanilla-ts), `tsconfig` strict, folder layout `src/engine`, `src/platform`, `src/ui`
-    - [ ] ESLint + Prettier config
-    - [ ] `justfile` with `dev`, `test`, `coverage`, `build`, `e2e`, `lint`
+- [x] Task: Initialise Vite + strict TypeScript project `56f3e07`
+    - [x] `npm create vite` (vanilla-ts), `tsconfig` strict, folder layout `src/engine`, `src/platform`, `src/ui`
+    - [x] ESLint + Prettier config
+    - [x] `justfile` with `dev`, `test`, `coverage`, `build`, `e2e`, `lint`
 - [ ] Task: Testing harness
     - [ ] Vitest + jsdom + `@vitest/coverage-v8` (80% threshold), smoke test
     - [ ] Playwright config (mobile portrait 390×844 + desktop 1440×900; system Chrome GPU flags on pupurabbux), smoke e2e
