@@ -1,0 +1,3 @@
+Task: Testing harness
+
+Added playwright.config.ts (390x844 touch + 1440x900, system Chrome w/ GPU flags, vite preview webServer), e2e/smoke.spec.ts, coverage config (80%) in vite.config.ts. Note: e2e requires port binding (run outside sandbox).
