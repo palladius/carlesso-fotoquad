@@ -1,0 +1,3 @@
+Task: Core types & seeded RNG
+
+src/engine/rng.ts (+tests, state save/restore), src/engine/types.ts (Photo, Tile, GameState, Action, GameEvent). Why: deterministic, serialisable engine foundation.
