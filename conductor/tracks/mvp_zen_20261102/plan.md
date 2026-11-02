@@ -32,9 +32,9 @@ Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.m
 - [x] Task: Match, discard & refill (FR-4.5–4.6) `3d91f8a`
     - [x] Write tests: 4 quadrants same photo → `MATCHED` event, tiles discarded, solved count++, slots refilled from piles, pile counts, pile exhaustion
     - [x] Implement match detection, discard, refill + emitted engine events (for UI animations/audio)
-- [ ] Task: Hint & victory (FR-6, FR-7 logic)
-    - [ ] Write tests: hint returns 4 visible tiles of a completable photo; hint counter; victory when all solved; stats
-    - [ ] Implement `findHint`, victory detection, stats
+- [x] Task: Hint & victory (FR-6, FR-7 logic) `ad40674`
+    - [x] Write tests: hint returns 4 visible tiles of a completable photo; hint counter; victory when all solved; stats
+    - [x] Implement `findHint`, victory detection, stats
 - [ ] Task: State serialisation
     - [ ] Write tests: `serialize`/`deserialize` round-trip; schema version; invalid input rejected
     - [ ] Implement versioned snapshot format
