@@ -1,3 +1,7 @@
 Task: CI & hosting
 
 Added .github/workflows/ci.yml and pages.yml (GITHUB_PAGES=true sets Vite base /carlesso-fotoquad/).
+
+Phase 1 checkpoint verification report
+
+Automated: CI=true npx vitest run --coverage (1/1 pass, 100%), npx tsc --noEmit, eslint, prettier --check, CI=true npx playwright test (2/2 pass: mobile-portrait + desktop). Manual verification deferred by user decision (2026-11-02): verify manually once the game is playable on localhost.
