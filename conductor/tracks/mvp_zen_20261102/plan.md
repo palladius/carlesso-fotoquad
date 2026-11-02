@@ -20,9 +20,9 @@ Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.m
     - [x] Write tests: RNG determinism, `shuffle` reproducibility
     - [x] Implement `rng.ts` (e.g. mulberry32) and `shuffle`
     - [x] Define types: `Photo`, `Quadrant` (`TL|TR|BL|BR`), `Tile`, `GameState`, `Action`
-- [ ] Task: Deck building & dealing
-    - [ ] Write tests: N photos → N×4 tiles; round-robin split into 5 piles; initial 30-slot tableau; <30 tiles case
-    - [ ] Implement `createGame(photos, seed, options)`
+- [x] Task: Deck building & dealing `5319e11`
+    - [x] Write tests: N photos → N×4 tiles; round-robin split into 5 piles; initial 30-slot tableau; <30 tiles case
+    - [x] Implement `createGame(photos, seed, options)`
 - [ ] Task: Solvability-aware dealer (FR-5)
     - [ ] Write property tests over many seeds: visible set always contains ≥1 complete photo while unsolved; no photo laid out in natural 2×2 adjacency
     - [ ] Implement dealer strategy for initial deal and refills
