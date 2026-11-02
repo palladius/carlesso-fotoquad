@@ -1,0 +1,3 @@
+Task: Hint & victory
+
+reducer.ts: findHint + HINT action (hintsUsed++, hint event). Victory/stats already emitted by resolveMatch; covered in hint.test.ts and match.test.ts.
