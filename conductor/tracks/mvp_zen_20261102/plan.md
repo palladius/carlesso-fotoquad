@@ -2,7 +2,7 @@
 
 Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.md](../../workflow.md)
 
-## Phase 1: Scaffolding & Tooling
+## Phase 1: Scaffolding & Tooling [checkpoint: 9ef485d]
 - [x] Task: Initialise Vite + strict TypeScript project `56f3e07`
     - [x] `npm create vite` (vanilla-ts), `tsconfig` strict, folder layout `src/engine`, `src/platform`, `src/ui`
     - [x] ESLint + Prettier config
@@ -13,7 +13,7 @@ Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.m
 - [x] Task: CI & hosting `9ef485d`
     - [x] GitHub Actions: lint + unit tests + build on PR/push
     - [x] GitHub Pages deploy workflow (Vite `base` configured for `/carlesso-fotoquad/`)
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `9ef485d`
 
 ## Phase 2: Pure Game Engine (TDD, DOM-free)
 - [ ] Task: Core types & seeded RNG
