@@ -7,3 +7,7 @@ dist/
 # Real family photos never go to the public repo
 assets/photos/private/
 public/photos/private/
+playwright-report/
+test-results/
+coverage/
+dev-dist/
