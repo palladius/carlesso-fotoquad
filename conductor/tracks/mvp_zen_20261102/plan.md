@@ -26,9 +26,9 @@ Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.m
 - [x] Task: Solvability-aware dealer (FR-5) `3318df4`
     - [x] Write property tests over many seeds: visible set always contains ≥1 complete photo while unsolved; no photo laid out in natural 2×2 adjacency
     - [x] Implement dealer strategy for initial deal and refills
-- [ ] Task: Tray mechanics (FR-4.1–4.4)
-    - [ ] Write tests: tap grid→tray slot by quadrant; conflict replacement returns old tile to vacated slot; tap tray→grid; move counter
-    - [ ] Implement `reduce(state, action)` for `PLACE_TILE`, `RETURN_TILE`
+- [x] Task: Tray mechanics (FR-4.1–4.4) `93d1797`
+    - [x] Write tests: tap grid→tray slot by quadrant; conflict replacement returns old tile to vacated slot; tap tray→grid; move counter
+    - [x] Implement `reduce(state, action)` for `PLACE_TILE`, `RETURN_TILE`
 - [ ] Task: Match, discard & refill (FR-4.5–4.6)
     - [ ] Write tests: 4 quadrants same photo → `MATCHED` event, tiles discarded, solved count++, slots refilled from piles, pile counts, pile exhaustion
     - [ ] Implement match detection, discard, refill + emitted engine events (for UI animations/audio)
