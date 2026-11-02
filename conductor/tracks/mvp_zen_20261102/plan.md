@@ -10,9 +10,9 @@ Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.m
 - [x] Task: Testing harness `18bb0fc`
     - [x] Vitest + jsdom + `@vitest/coverage-v8` (80% threshold), smoke test
     - [x] Playwright config (mobile portrait 390×844 + desktop 1440×900; system Chrome GPU flags on pupurabbux), smoke e2e
-- [ ] Task: CI & hosting
-    - [ ] GitHub Actions: lint + unit tests + build on PR/push
-    - [ ] GitHub Pages deploy workflow (Vite `base` configured for `/carlesso-fotoquad/`)
+- [x] Task: CI & hosting `9ef485d`
+    - [x] GitHub Actions: lint + unit tests + build on PR/push
+    - [x] GitHub Pages deploy workflow (Vite `base` configured for `/carlesso-fotoquad/`)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2: Pure Game Engine (TDD, DOM-free)
