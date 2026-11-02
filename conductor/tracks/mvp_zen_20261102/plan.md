@@ -35,9 +35,9 @@ Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.m
 - [x] Task: Hint & victory (FR-6, FR-7 logic) `ad40674`
     - [x] Write tests: hint returns 4 visible tiles of a completable photo; hint counter; victory when all solved; stats
     - [x] Implement `findHint`, victory detection, stats
-- [ ] Task: State serialisation
-    - [ ] Write tests: `serialize`/`deserialize` round-trip; schema version; invalid input rejected
-    - [ ] Implement versioned snapshot format
+- [x] Task: State serialisation `126a935`
+    - [x] Write tests: `serialize`/`deserialize` round-trip; schema version; invalid input rejected
+    - [x] Implement versioned snapshot format
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 3: Platform Adapters
