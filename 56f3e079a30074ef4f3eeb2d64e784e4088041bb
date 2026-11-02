@@ -1,0 +1,3 @@
+Task: Initialise Vite + strict TypeScript project
+
+Created package.json, tsconfig.json (strict), vite.config.ts (GitHub Pages base), eslint.config.js, .prettierrc.json, justfile, index.html, favicon, src/main.ts splash, src/styles/main.css, smoke unit test. Why: foundation for all subsequent TDD work.
