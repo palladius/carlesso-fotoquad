@@ -1,6 +1,6 @@
-import { dealInto } from './dealer';
+import { completablePhotos, dealInto } from './dealer';
 import { createRng } from './rng';
-import { parseTile } from './tiles';
+import { parseTile, tileId } from './tiles';
 import {
   QUADRANTS,
   type Action,
@@ -23,10 +23,28 @@ export function reduce(prev: GameState, action: Action): StepResult {
     case 'RETURN_TILE':
       giveBack(state, action.quadrant, events);
       break;
+    case 'HINT': {
+      const hint = findHint(state);
+      if (hint) {
+        state.hintsUsed += 1;
+        events.push({ type: 'hint', ...hint });
+      }
+      break;
+    }
     default:
       break;
   }
   return events.length ? { state, events } : { state: prev, events };
+}
+
+/** FR-6: the 4 tiles of a completable photo, preferring the one most advanced in the tray. */
+export function findHint(state: GameState): { photoId: string; tileIds: string[] } | null {
+  const options = completablePhotos(state);
+  if (options.length === 0) return null;
+  const inTray = (p: string) => QUADRANTS.filter((q) => state.tray[q] === tileId(p, q)).length;
+  let best = options[0] as string;
+  for (const p of options) if (inTray(p) > inTray(best)) best = p;
+  return { photoId: best, tileIds: QUADRANTS.map((q) => tileId(best, q)) };
 }
 
 function place(state: GameState, gridIndex: number, events: GameEvent[]): void {
