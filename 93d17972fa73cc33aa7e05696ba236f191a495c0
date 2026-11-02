@@ -1,0 +1,3 @@
+Task: Tray mechanics
+
+src/engine/reducer.ts: PLACE_TILE (slot by quadrant, conflict replace -> old tile to vacated slot, origin inheritance), RETURN_TILE (to origin or first empty). Moves count placements only.
