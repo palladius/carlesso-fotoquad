@@ -1,0 +1,3 @@
+Task: Deck building & dealing
+
+src/engine/game.ts: tileId/parseTile, allTileIds, gridSizeFor (cap 30, whole rows for small decks), createGame, visibleTiles. Tests in game.test.ts.
