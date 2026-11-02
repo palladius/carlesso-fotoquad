@@ -16,10 +16,10 @@ Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.m
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `9ef485d`
 
 ## Phase 2: Pure Game Engine (TDD, DOM-free)
-- [ ] Task: Core types & seeded RNG
-    - [ ] Write tests: RNG determinism, `shuffle` reproducibility
-    - [ ] Implement `rng.ts` (e.g. mulberry32) and `shuffle`
-    - [ ] Define types: `Photo`, `Quadrant` (`TL|TR|BL|BR`), `Tile`, `GameState`, `Action`
+- [x] Task: Core types & seeded RNG `3304a0e`
+    - [x] Write tests: RNG determinism, `shuffle` reproducibility
+    - [x] Implement `rng.ts` (e.g. mulberry32) and `shuffle`
+    - [x] Define types: `Photo`, `Quadrant` (`TL|TR|BL|BR`), `Tile`, `GameState`, `Action`
 - [ ] Task: Deck building & dealing
     - [ ] Write tests: N photos → N×4 tiles; round-robin split into 5 piles; initial 30-slot tableau; <30 tiles case
     - [ ] Implement `createGame(photos, seed, options)`
