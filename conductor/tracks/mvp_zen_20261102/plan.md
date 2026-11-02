@@ -29,9 +29,9 @@ Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.m
 - [x] Task: Tray mechanics (FR-4.1–4.4) `93d1797`
     - [x] Write tests: tap grid→tray slot by quadrant; conflict replacement returns old tile to vacated slot; tap tray→grid; move counter
     - [x] Implement `reduce(state, action)` for `PLACE_TILE`, `RETURN_TILE`
-- [ ] Task: Match, discard & refill (FR-4.5–4.6)
-    - [ ] Write tests: 4 quadrants same photo → `MATCHED` event, tiles discarded, solved count++, slots refilled from piles, pile counts, pile exhaustion
-    - [ ] Implement match detection, discard, refill + emitted engine events (for UI animations/audio)
+- [x] Task: Match, discard & refill (FR-4.5–4.6) `3d91f8a`
+    - [x] Write tests: 4 quadrants same photo → `MATCHED` event, tiles discarded, solved count++, slots refilled from piles, pile counts, pile exhaustion
+    - [x] Implement match detection, discard, refill + emitted engine events (for UI animations/audio)
 - [ ] Task: Hint & victory (FR-6, FR-7 logic)
     - [ ] Write tests: hint returns 4 visible tiles of a completable photo; hint counter; victory when all solved; stats
     - [ ] Implement `findHint`, victory detection, stats
