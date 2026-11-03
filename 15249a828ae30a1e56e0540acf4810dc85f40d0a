@@ -1,0 +1,1 @@
+Start screen: 3 level buttons (data-level) + small Continua/Album; App.newGame(level) uses selectPhotos + markPlayed; records per level; packs.ts removed. e2e/helpers.ts (fresh, limitPhotos via page.route, startLevel, dismissPopup). Unit + e2e green.
