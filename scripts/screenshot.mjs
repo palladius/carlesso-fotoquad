@@ -14,9 +14,9 @@ for (const [name, vp] of [
   await page.goto(url);
   await page.evaluate(() => localStorage.clear());
   await page.reload();
-  await page.waitForSelector('[data-pack]');
+  await page.waitForSelector('[data-level]');
   await page.screenshot({ path: `${out}-${name}-start.png` });
-  await page.locator('[data-pack="all"]').click();
+  await page.locator('[data-level="medio"]').click();
   await page.waitForSelector('.grid .tile');
   await page.waitForTimeout(800);
   await page.screenshot({ path: `${out}-${name}-table.png` });

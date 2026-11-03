@@ -141,6 +141,61 @@ button:focus-visible {
   background: transparent;
 }
 
+.levels {
+  display: grid;
+  gap: 14px;
+  width: min(100%, 440px);
+  margin-top: 12px;
+}
+
+.big-btn.level {
+  min-height: 84px;
+  padding: 14px 18px;
+}
+
+.big-btn.level .emoji {
+  font-size: 2.4rem;
+}
+
+.big-btn.level .label {
+  font-size: 1.45rem;
+}
+
+.level-facile {
+  background: rgb(122 211 137 / 0.25);
+}
+
+.level-medio {
+  background: rgb(244 197 66 / 0.25);
+}
+
+.level-difficile {
+  background: rgb(232 115 74 / 0.28);
+}
+
+.secondary {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.small-btn {
+  min-height: 44px;
+  padding: 8px 16px;
+  border-radius: 22px;
+  border: 2px solid rgb(255 255 255 / 0.2);
+  background: rgb(0 0 0 / 0.22);
+  font-weight: 600;
+}
+
+.small-btn.resume {
+  background: var(--gold);
+  color: #2a2100;
+  border-color: transparent;
+}
+
 .howto {
   margin: 0;
   max-width: 420px;

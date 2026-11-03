@@ -1,91 +1,62 @@
 import type { Photo } from '../engine/types';
-import type { Pack } from '../platform/packs';
 import type { Difficulty } from '../platform/storage';
 import { h } from './dom';
 import { confetti } from './fx';
 
 export interface StartScreenProps {
-  packs: Pack[];
-  records: Record<string, number | null>;
-  resume: { packName: string; solved: number; total: number } | null;
+  records: Record<Difficulty, number | null>;
+  resume: { level: Difficulty; solved: number; total: number } | null;
   albumCount: number;
-  difficulty: Difficulty;
-  onDifficulty(d: Difficulty): void;
-  onStart(pack: Pack): void;
+  onLevel(level: Difficulty): void;
   onResume(): void;
   onAlbum(): void;
 }
 
-function difficultyPicker(current: Difficulty, onChange: (d: Difficulty) => void): HTMLElement {
-  const opts: [Difficulty, string, string][] = [
-    ['facile', '🐣 Facile', 'tocca: i pezzi vanno nel vassoio'],
-    ['medio', '🙂 Medio', 'trascina, fino a 3 foto fattibili'],
-    ['difficile', '🧠 Difficile', 'trascina, 1 sola foto fattibile'],
-  ];
-  const box = h('div', { class: 'difficulty', role: 'radiogroup', 'aria-label': 'Difficoltà' });
-  const render = (sel: Difficulty) =>
-    box.replaceChildren(
-      ...opts.map(([d, label, hint]) =>
-        h(
-          'button',
-          {
-            class: `diff-btn${d === sel ? ' active' : ''}`,
-            role: 'radio',
-            'aria-checked': String(d === sel),
-            'data-difficulty': d,
-            onclick: () => {
-              onChange(d);
-              render(d);
-            },
-          },
-          h('span', { class: 'label', text: label }),
-          h('small', { text: hint }),
-        ),
-      ),
-    );
-  render(current);
-  return box;
-}
+const LEVELS: [Difficulty, string, string, string][] = [
+  ['facile', '🐣', 'Facile', 'tocca i pezzi: vanno nel vassoio'],
+  ['medio', '🙂', 'Medio', 'trascina i pezzi nella scacchiera'],
+  ['difficile', '🧠', 'Difficile', 'una sola foto alla volta è fattibile'],
+];
 
+const LEVEL_NAME: Record<Difficulty, string> = { facile: 'Facile', medio: 'Medio', difficile: 'Difficile' };
+
+/** FR-1: just three big level buttons; photos are chosen and rotated by the game. */
 export function startScreen(p: StartScreenProps): HTMLElement {
   return h(
     'main',
     { class: 'screen start' },
     h('h1', { class: 'logo' }, h('span', { text: '📸🧩' }), ' FotoQuad'),
     h('p', { class: 'tagline', text: 'Il Solitario di Famiglia' }),
-    h('p', { class: 'howto', text: 'Ricomponi ogni foto dai suoi 4 pezzi ✨' }),
-    p.resume
-      ? h(
-          'button',
-          { class: 'big-btn resume', onclick: () => p.onResume() },
-          h('span', { class: 'emoji', text: '▶️' }),
-          h('span', { class: 'label', text: 'Continua la partita' }),
-          h('small', { text: `${p.resume.packName} · ${p.resume.solved}/${p.resume.total}` }),
-        )
-      : null,
-    h('h2', { text: 'Difficoltà' }),
-    difficultyPicker(p.difficulty, p.onDifficulty),
-    h('h2', { text: 'Scegli il mazzo' }),
     h(
       'div',
-      { class: 'packs' },
-      ...p.packs.map((pack) => {
-        const rec = p.records[pack.id];
+      { class: 'levels' },
+      ...LEVELS.map(([level, emoji, name, hint]) => {
+        const rec = p.records[level];
         return h(
           'button',
-          { class: 'big-btn pack', 'data-pack': pack.id, onclick: () => p.onStart(pack) },
-          h('span', { class: 'emoji', text: pack.emoji }),
-          h('span', { class: 'label', text: pack.name }),
-          h('small', { text: `${pack.photoIds.length} foto${rec ? ` · 🏆 ${rec} mosse` : ''}` }),
+          { class: `big-btn level level-${level}`, 'data-level': level, onclick: () => p.onLevel(level) },
+          h('span', { class: 'emoji', text: emoji }),
+          h('span', { class: 'label', text: name }),
+          h('small', { text: rec ? `${hint} · 🏆 ${rec} mosse` : hint }),
         );
       }),
     ),
     h(
-      'button',
-      { class: 'big-btn album-btn', onclick: () => p.onAlbum() },
-      h('span', { class: 'emoji', text: '📖' }),
-      h('span', { class: 'label', text: 'Album Ricordi' }),
-      h('small', { text: `${p.albumCount} foto sbloccate` }),
+      'div',
+      { class: 'secondary' },
+      p.resume
+        ? h('button', {
+            class: 'small-btn resume',
+            text: `▶️ Continua (${LEVEL_NAME[p.resume.level]} · ${p.resume.solved}/${p.resume.total})`,
+            onclick: () => p.onResume(),
+          })
+        : null,
+      h('button', {
+        class: 'small-btn album-btn',
+        'aria-label': `Album Ricordi, ${p.albumCount} foto sbloccate`,
+        text: `📖 Album (${p.albumCount})`,
+        onclick: () => p.onAlbum(),
+      }),
     ),
   );
 }

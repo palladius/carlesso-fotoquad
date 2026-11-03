@@ -61,10 +61,10 @@ let root: HTMLElement;
 let audio: ReturnType<typeof fakeAudio>;
 let slice: typeof fakeSlice;
 
-function makeApp(seed = 7) {
+function makeApp(seed = 7, photos: Photo[] = PHOTOS) {
   return new App({
     root,
-    photos: PHOTOS,
+    photos,
     storage: createStorage(window.localStorage),
     audio,
     slice: (p) => slice(p),
@@ -79,12 +79,13 @@ const flush = () => vi.advanceTimersByTimeAsync(10_000);
 const slotEl = (i: number) => $(`.slot[data-slot="${i}"]`);
 const tileAt = (i: number) => slotEl(i).querySelector('.tile') as HTMLElement;
 
-async function start(app: App, pack: string, difficulty?: 'facile' | 'medio' | 'difficile') {
+async function start(app: App, level: 'facile' | 'medio' | 'difficile') {
   app.showStart();
-  if (difficulty) $(`[data-difficulty="${difficulty}"]`).click();
-  $(`[data-pack="${pack}"]`).click();
+  $(`[data-level="${level}"]`).click();
   await flush();
 }
+
+const THREE = PHOTOS.slice(0, 3);
 
 /** Solves one completable photo by swapping its tiles into slots 0,1,5,6 through the app. */
 async function solveOne(app: App) {
@@ -119,17 +120,39 @@ afterEach(() => {
 });
 
 describe('start screen', () => {
-  it('lists packs, album count and persists the difficulty choice', () => {
+  it('offers just three level buttons and the album (FR-1)', () => {
     const app = makeApp();
     app.showStart();
-    expect($$('[data-pack]').map((b) => b.dataset.pack)).toEqual(['bimbi', 'viaggi', 'gamberone', 'all']);
-    expect($('.album-btn').textContent).toContain('0 foto sbloccate');
-    expect($('[data-difficulty="medio"]').getAttribute('aria-checked')).toBe('true');
-    $('[data-difficulty="difficile"]').click();
-    expect($('[data-difficulty="difficile"]').getAttribute('aria-checked')).toBe('true');
-    expect(createStorage(localStorage).difficulty()).toBe('difficile');
+    expect($$('[data-level]').map((b) => b.dataset.level)).toEqual(['facile', 'medio', 'difficile']);
+    expect($('[data-pack]')).toBeNull();
+    expect($('.resume')).toBeNull();
+    expect($('.album-btn').textContent).toContain('Album (0)');
     root.dispatchEvent(new Event('pointerdown'));
     expect(audio.unlock).toHaveBeenCalled();
+  });
+
+  it('a level button starts a game with that level and its photo count (FR-2)', async () => {
+    const app = makeApp();
+    await start(app, 'difficile');
+    expect(app.currentState?.options).toMatchObject({ mode: 'grid', maxCompletable: 1 });
+    expect(app.currentState?.photoIds).toHaveLength(12); // library (12) < 24
+    expect(createStorage(localStorage).difficulty()).toBe('difficile');
+    $('[aria-label="Menu"]').click();
+    await start(app, 'facile');
+    expect(app.currentState?.options.mode).toBe('tray');
+    expect(app.currentState?.photoIds).toHaveLength(6);
+  });
+
+  it('consecutive games rotate photos (FR-3)', async () => {
+    const lib = Array.from({ length: 12 }, (_, i) => ({ id: `r${i}`, src: '', title: `R${i}`, tags: [] }));
+    const app = makeApp(1, lib);
+    await start(app, 'facile');
+    const first = [...app.currentState!.photoIds];
+    $('[aria-label="Menu"]').click();
+    const app2 = makeApp(2, lib);
+    await start(app2, 'facile');
+    const second = app2.currentState!.photoIds;
+    expect(second.filter((id) => first.includes(id))).toEqual([]);
   });
 
   it('maps difficulty to engine options', () => {
@@ -142,7 +165,7 @@ describe('start screen', () => {
 describe('grid mode table', () => {
   it('renders piles, a full tableau and the HUD', async () => {
     const app = makeApp();
-    await start(app, 'all');
+    await start(app, 'medio');
     expect($$('.pile')).toHaveLength(5);
     expect($$('.grid .tile')).toHaveLength(30);
     expect($('.hud-solved').textContent).toBe('📸 0 / 12');
@@ -153,7 +176,7 @@ describe('grid mode table', () => {
 
   it('tap-tap swaps two tiles and taps on the same tile deselect', async () => {
     const app = makeApp();
-    await start(app, 'all');
+    await start(app, 'medio');
     const [a, b] = [tileAt(2).dataset.tile, tileAt(9).dataset.tile];
     tap(tileAt(2));
     expect(tileAt(2).classList.contains('selected')).toBe(true);
@@ -170,7 +193,7 @@ describe('grid mode table', () => {
 
   it('keyboard Enter/Space selects and swaps', async () => {
     const app = makeApp();
-    await start(app, 'all');
+    await start(app, 'medio');
     const a = tileAt(0).dataset.tile;
     tileAt(0).dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
     tileAt(4).dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
@@ -180,7 +203,7 @@ describe('grid mode table', () => {
 
   it('drag & drop swaps onto the slot under the pointer; dropping nowhere cancels', async () => {
     const app = makeApp();
-    await start(app, 'all');
+    await start(app, 'medio');
     const a = tileAt(3).dataset.tile;
     const target = slotEl(20);
     document.elementsFromPoint = vi.fn(() => [target]);
@@ -211,14 +234,14 @@ describe('grid mode table', () => {
 
   it('HUD counters have accessible labels (FR-3)', async () => {
     const app = makeApp();
-    await start(app, 'all');
+    await start(app, 'medio');
     expect($('.hud-solved').getAttribute('aria-label')).toBe('Foto risolte: 0 di 12');
     expect($('.hud-moves').getAttribute('aria-label')).toBe('Mosse: 0');
   });
 
   it('selecting a tile or starting a drag gives immediate tap feedback (guidelines UX #2)', async () => {
     const app = makeApp();
-    await start(app, 'all');
+    await start(app, 'medio');
     audio.play.mockClear();
     tap(tileAt(2));
     expect(audio.play).toHaveBeenCalledWith('tap');
@@ -232,8 +255,8 @@ describe('grid mode table', () => {
   });
 
   it('keyboard can move a tile into an empty slot (FR-4.1 / AC-5)', async () => {
-    const app = makeApp();
-    await start(app, 'gamberone'); // 12 tiles on a 15-slot tableau: 3 empty slots
+    const app = makeApp(7, THREE);
+    await start(app, 'medio'); // 12 tiles on a 15-slot tableau: 3 empty slots
     const empty = $$('.slot.empty')[0] as HTMLElement;
     expect(empty.getAttribute('tabindex')).toBe('0');
     expect(empty.getAttribute('aria-label')).toBe('Spazio vuoto');
@@ -250,7 +273,7 @@ describe('grid mode table', () => {
 
   it('hint highlights the 4 tiles of a completable photo for ~3s', async () => {
     const app = makeApp();
-    await start(app, 'all');
+    await start(app, 'medio');
     $('.hint-btn').click();
     await vi.advanceTimersByTimeAsync(10);
     expect($$('.tile.hint')).toHaveLength(4);
@@ -261,7 +284,7 @@ describe('grid mode table', () => {
 
   it('mute toggle is persisted', async () => {
     const app = makeApp();
-    await start(app, 'all');
+    await start(app, 'medio');
     const btn = $('[aria-label="Audio"]');
     btn.click();
     expect(btn.textContent).toBe('🔇');
@@ -271,8 +294,8 @@ describe('grid mode table', () => {
   });
 
   it('plays a full game to victory, unlocks the album and restarts', async () => {
-    const app = makeApp();
-    await start(app, 'gamberone');
+    const app = makeApp(7, THREE);
+    await start(app, 'medio');
     for (let i = 0; i < 3; i++) await solveOne(app);
     expect($('.victory')).not.toBeNull();
     expect($('.victory').textContent).toContain('Nuovo record');
@@ -304,16 +327,16 @@ describe('grid mode table', () => {
   });
 
   it('victory menu button returns to the start screen showing the record', async () => {
-    const app = makeApp();
-    await start(app, 'gamberone');
+    const app = makeApp(7, THREE);
+    await start(app, 'medio');
     for (let i = 0; i < 3; i++) await solveOne(app);
     [...$$('.victory button')].find((b) => b.textContent?.includes('Menu'))?.click();
-    expect($('[data-pack="gamberone"]').textContent).toContain('🏆');
+    expect($('[data-level="medio"]').textContent).toContain('🏆');
   });
 
   it('resumes an in-progress game from the start screen', async () => {
     const app = makeApp();
-    await start(app, 'all');
+    await start(app, 'medio');
     const pending = app.dispatch({ type: 'SWAP', from: 0, to: 1 });
     await flush();
     await pending;
@@ -331,7 +354,7 @@ describe('grid mode table', () => {
 
   it('starts fresh when some photos of a saved game cannot be sliced', async () => {
     const app = makeApp();
-    await start(app, 'all');
+    await start(app, 'medio');
     slice = (p) => fakeSlice(p.slice(1));
     const app2 = makeApp();
     app2.showStart();
@@ -346,14 +369,14 @@ describe('grid mode table', () => {
     $('.album-btn').click();
     expect($('.album-empty')).not.toBeNull();
     $('[aria-label="Chiudi"]').click();
-    expect($('[data-pack]')).not.toBeNull();
+    expect($('[data-level]')).not.toBeNull();
   });
 });
 
 describe('tray mode (Facile)', () => {
   it('tap sends a tile to the tray and back; full game ends in victory', async () => {
-    const app = makeApp();
-    await start(app, 'gamberone', 'facile');
+    const app = makeApp(7, THREE);
+    await start(app, 'facile');
     expect($('.tray')).not.toBeNull();
     const id = tileAt(0).dataset.tile as string;
     tileAt(0).click();
@@ -380,7 +403,7 @@ describe('tray mode (Facile)', () => {
 
   it('a conflicting tile replaces the tray tile, which returns to the grid', async () => {
     const app = makeApp();
-    await start(app, 'all', 'facile');
+    await start(app, 'facile');
     const tl = $$('.grid .tile').filter((t) => t.dataset.tile?.endsWith('#TL'));
     const [first, second] = [tl[0]!.dataset.tile!, tl[1]!.dataset.tile!];
     $(`[data-tile="${first}"]`).click();
@@ -409,8 +432,8 @@ describe('animations enabled', () => {
       toJSON: () => ({}),
     };
     vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue(rect as DOMRect);
-    const app = makeApp();
-    await start(app, 'gamberone');
+    const app = makeApp(7, THREE);
+    await start(app, 'medio');
     for (let i = 0; i < 3; i++) await solveOne(app);
     expect(Element.prototype.animate).toHaveBeenCalled();
     expect($('.victory')).not.toBeNull();

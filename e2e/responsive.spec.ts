@@ -13,7 +13,7 @@ for (const vp of VIEWPORTS) {
     await page.goto('/');
     await page.evaluate(() => localStorage.clear());
     await page.reload();
-    await page.locator('[data-pack="all"]').click();
+    await page.locator('[data-level="medio"]').click();
     await expect(page.locator('.grid .tile')).toHaveCount(30);
     const m = await page.evaluate(() => {
       const grid = document.querySelector('.grid')!.getBoundingClientRect();

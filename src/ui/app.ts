@@ -8,10 +8,10 @@ import {
   type GameState,
   type Photo,
 } from '../engine/types';
-import type { Difficulty } from '../platform/storage';
+import { createRng } from '../engine/rng';
 import type { GameAudio } from '../platform/audio';
-import type { Pack } from '../platform/packs';
-import { buildPacks } from '../platform/packs';
+import { PHOTOS_PER_LEVEL, selectPhotos } from '../platform/rotation';
+import type { Difficulty } from '../platform/storage';
 import type { SlicedPhoto } from '../platform/slicer';
 import type { GameStorage } from '../platform/storage';
 import { albumScreen, loadingScreen, startScreen, victoryScreen } from './screens';
@@ -33,17 +33,17 @@ export function optionsFor(d: Difficulty): GameOptions {
   return { ...DEFAULT_OPTIONS, mode: 'grid', maxCompletable: d === 'medio' ? 3 : 1 };
 }
 
+const LEVELS: Difficulty[] = ['facile', 'medio', 'difficile'];
+
 /** Orchestrates screens, engine and persistence. */
 export class App {
-  private readonly packs: Pack[];
   private readonly photosById: Map<string, Photo>;
   private readonly sliced = new Map<string, SlicedPhoto>();
   private table: TableView | null = null;
   private state: GameState | null = null;
-  private packId = 'all';
+  private level: Difficulty = 'medio';
 
   constructor(private readonly d: AppDeps) {
-    this.packs = buildPacks(d.photos);
     this.photosById = new Map(d.photos.map((p) => [p.id, p]));
     d.audio.setMuted(d.storage.muted());
     // Web Audio must be unlocked by a user gesture
@@ -59,41 +59,54 @@ export class App {
   showStart(): void {
     this.table?.destroy();
     this.table = null;
+    this.state = null;
     const saved = this.d.storage.loadGame();
-    const savedPack = saved && this.packs.find((p) => p.id === saved.packId);
+    const savedLevel = saved && LEVELS.find((l) => l === saved.packId);
     const resumable =
-      saved && savedPack && saved.state.photoIds.every((id) => this.photosById.has(id)) ? saved : null;
+      saved && savedLevel && saved.state.photoIds.every((id) => this.photosById.has(id))
+        ? { level: savedLevel, state: saved.state }
+        : null;
     this.d.root.replaceChildren(
       startScreen({
-        packs: this.packs,
-        records: Object.fromEntries(this.packs.map((p) => [p.id, this.d.storage.record(p.id)])),
+        records: {
+          facile: this.record('facile'),
+          medio: this.record('medio'),
+          difficile: this.record('difficile'),
+        },
         resume: resumable
           ? {
-              packName: savedPack?.name ?? '',
+              level: resumable.level,
               solved: resumable.state.solved.length,
               total: resumable.state.photoIds.length,
             }
           : null,
         albumCount: this.unlockedPhotos().length,
-        difficulty: this.d.storage.difficulty(),
-        onDifficulty: (d) => this.d.storage.setDifficulty(d),
-        onStart: (pack) => void this.newGame(pack),
-        onResume: () => resumable && void this.openGame(resumable.packId, resumable.state),
+        onLevel: (level) => void this.newGame(level),
+        onResume: () => resumable && void this.openGame(resumable.level, resumable.state),
         onAlbum: () => this.openAlbum(),
       }),
     );
   }
 
-  async newGame(pack: Pack): Promise<void> {
-    const photos = pack.photoIds.map((id) => this.photosById.get(id)).filter((p): p is Photo => !!p);
-    const ready = await this.ensureSliced(photos);
-    if (!ready.length) return;
-    const state = createGame(ready, this.d.seed(), this.gameOptions(), this.d.now());
-    await this.openGame(pack.id, state);
+  private record(level: Difficulty): number | null {
+    return this.d.storage.record(level);
   }
 
-  private gameOptions(): GameOptions {
-    return optionsFor(this.d.storage.difficulty());
+  /** FR-1/2/3: a level button starts a game with photos picked by the rotation. */
+  async newGame(level: Difficulty): Promise<void> {
+    const seed = this.d.seed();
+    const picked = selectPhotos(
+      this.d.photos,
+      PHOTOS_PER_LEVEL[level],
+      this.d.storage.lastPlayed(),
+      createRng(seed),
+    );
+    const ready = await this.ensureSliced(picked);
+    if (!ready.length) return this.showStart();
+    this.d.storage.markPlayed(ready.map((p) => p.id));
+    this.d.storage.setDifficulty(level);
+    const state = createGame(ready, seed, optionsFor(level), this.d.now());
+    await this.openGame(level, state);
   }
 
   private async ensureSliced(photos: Photo[]): Promise<Photo[]> {
@@ -105,18 +118,18 @@ export class App {
     return photos.filter((p) => this.sliced.has(p.id));
   }
 
-  async openGame(packId: string, state: GameState): Promise<void> {
+  async openGame(level: Difficulty, state: GameState): Promise<void> {
     const photos = state.photoIds.map((id) => this.photosById.get(id)).filter((p): p is Photo => !!p);
     const ready = await this.ensureSliced(photos);
     if (ready.length !== state.photoIds.length) {
       // some photo could not be loaded: start a fresh game with what we have
       this.d.storage.clearGame();
       if (!ready.length) return this.showStart();
-      state = createGame(ready, this.d.seed(), this.gameOptions(), this.d.now());
+      state = createGame(ready, this.d.seed(), optionsFor(level), this.d.now());
     }
-    this.packId = packId;
+    this.level = level;
     this.state = state;
-    this.d.storage.saveGame(packId, state);
+    this.d.storage.saveGame(level, state);
     this.table?.destroy();
     this.table = new TableView(
       state,
@@ -149,12 +162,12 @@ export class App {
     if (matched.length) this.d.storage.unlock(matched);
     const won = events.find((e) => e.type === 'won');
     if (won) this.d.storage.clearGame();
-    else this.d.storage.saveGame(this.packId, state);
+    else this.d.storage.saveGame(this.level, state);
     await this.table.play(events, state, (s) => this.d.audio.play(s));
     if (won && won.type === 'won') {
       this.d.audio.play('victory');
-      const newRecord = this.d.storage.submitRecord(this.packId, won.moves);
-      const pack = this.packs.find((p) => p.id === this.packId);
+      const newRecord = this.d.storage.submitRecord(this.level, won.moves);
+      const level = this.level;
       this.d.root.append(
         victoryScreen({
           photos: state.photoIds.length,
@@ -162,7 +175,7 @@ export class App {
           hints: won.hintsUsed,
           durationMs: won.durationMs,
           newRecord,
-          onAgain: () => pack && void this.newGame(pack),
+          onAgain: () => void this.newGame(level),
           onAlbum: () => this.openAlbum(),
           onMenu: () => this.showStart(),
         }),

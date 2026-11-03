@@ -19,11 +19,10 @@ page.on(
 await page.goto(url);
 await page.evaluate(() => localStorage.clear());
 await page.reload();
-await page.waitForSelector('[data-pack]');
+await page.waitForSelector('[data-level]');
 await page.screenshot({ path: `${outDir}/mvp_zen_20261102-uat-t0.png` });
 
-await page.locator('[data-difficulty="difficile"]').click();
-await page.locator('[data-pack="all"]').click();
+await page.locator('[data-level="difficile"]').click();
 await page.waitForSelector('.grid .tile');
 const t0 = Date.now();
 

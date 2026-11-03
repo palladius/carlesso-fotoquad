@@ -32,7 +32,7 @@ test('each tile shows exactly its quadrant colour, also after a 3:4 centre crop'
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
-  await page.locator('[data-pack="all"]').click();
+  await page.locator('[data-level="medio"]').click();
   await expect(page.locator('.grid .tile')).toHaveCount(8);
 
   const samples = await page.locator('.grid .tile').evaluateAll(async (els) => {

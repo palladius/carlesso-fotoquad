@@ -1,7 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
 import { loadPhotos, parseManifest } from './manifest';
-import { buildPacks } from './packs';
-import type { Photo } from '../engine/types';
 
 const BASE = 'http://localhost/photos/photos.json';
 
@@ -80,27 +78,5 @@ describe('loadPhotos', () => {
         : ok([{ id: 'a', src: 'a.jpg' }]),
     );
     expect(await loadPhotos(fetchFn as unknown as typeof fetch, 'http://localhost/')).toHaveLength(1);
-  });
-});
-
-describe('buildPacks', () => {
-  const p = (id: string, tags: string[]): Photo => ({ id, src: id, title: id, tags });
-
-  it('derives the themed packs from tags and hides empty ones', () => {
-    const packs = buildPacks([p('1', ['ale', 'tennis']), p('2', ['gamberone']), p('3', ['sebi', 'viaggi'])]);
-    expect(packs.map((x) => [x.id, x.photoIds])).toEqual([
-      ['bimbi', ['1', '3']],
-      ['viaggi', ['3']],
-      ['gamberone', ['2']],
-      ['all', ['1', '2', '3']],
-    ]);
-  });
-
-  it('only offers the full archive when no themed tags exist', () => {
-    expect(buildPacks([p('1', [])]).map((x) => x.id)).toEqual(['all']);
-  });
-
-  it('matches tags case-insensitively', () => {
-    expect(buildPacks([p('1', ['Seby'])]).map((x) => x.id)).toEqual(['bimbi', 'all']);
   });
 });

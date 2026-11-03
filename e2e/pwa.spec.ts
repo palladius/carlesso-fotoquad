@@ -4,7 +4,7 @@ import { expect, test } from '@playwright/test';
 test('PWA: after the first visit the game works fully offline', async ({ page, context, baseURL }) => {
   test.skip(baseURL?.includes(':5173') ?? false, 'service worker only exists in production builds');
   await page.goto('/');
-  await expect(page.locator('[data-pack]').first()).toBeVisible();
+  await expect(page.locator('[data-level]').first()).toBeVisible();
   // wait for the service worker to install and take control
   await page.evaluate(async () => {
     await navigator.serviceWorker.ready;
@@ -16,8 +16,8 @@ test('PWA: after the first visit the game works fully offline', async ({ page, c
 
   await context.setOffline(true);
   await page.reload();
-  await page.locator('[data-pack="gamberone"]').click();
-  await expect(page.locator('.grid .tile')).toHaveCount(12);
+  await page.locator('[data-level="facile"]').click();
+  await expect(page.locator('.grid .tile')).toHaveCount(24);
   // tiles are real sliced images (blob URLs), proving photos came from the cache
   await expect(page.locator('.grid .tile').first()).toHaveAttribute('style', /blob:/);
   await context.setOffline(false);
