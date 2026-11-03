@@ -1,0 +1,1 @@
+F1 (typescript.md §1 Type Assertions): new src/engine/util.ts at() (+tests) used instead of index casts; isQuadrant() guard in parseTile; slicer/audio/reducer/table/fx/screens rewritten without casts. Remaining 7 casts are all untrusted-JSON boundaries (serialize, manifest, storage) with '// cast:' justification. Unit 109 pass (96%), e2e 30 pass on production build.
