@@ -35,3 +35,27 @@ export async function dismissPopup(page: Page): Promise<void> {
     await expect(popup).toBeHidden();
   }
 }
+
+/** Slots of a 2×2 block in the top-left corner, for whatever board shape the game picked. */
+export async function blockTargets(page: Page): Promise<number[]> {
+  const cols = await page
+    .locator('.grid')
+    .evaluate((el) =>
+      Number(
+        getComputedStyle(el).getPropertyValue('--cols') ||
+          (el as HTMLElement).style.getPropertyValue('--cols'),
+      ),
+    );
+  return [0, 1, cols, cols + 1];
+}
+
+export async function slotCount(page: Page): Promise<number> {
+  return page.locator('.slot').count();
+}
+
+/** Waits for the board, then asserts every slot holds a tile (a full board, whatever its shape). */
+export async function expectFullBoard(page: Page): Promise<void> {
+  await expect(page.locator('.slot').first()).toBeVisible();
+  const slots = await page.locator('.slot').count();
+  await expect(page.locator('.grid .tile')).toHaveCount(slots);
+}

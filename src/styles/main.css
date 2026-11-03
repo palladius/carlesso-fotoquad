@@ -482,6 +482,41 @@ button:focus-visible {
   grid-template-rows: auto auto 1fr;
 }
 
+/* Medio/Difficile on a wide screen: piles column | board | HUD column — the board gets the full height */
+.table.mode-grid.landscape {
+  grid-template-areas: 'piles grid hud';
+  grid-template-rows: auto;
+  grid-template-columns: auto auto auto;
+  column-gap: 32px;
+  align-items: center;
+  align-content: center;
+}
+
+.table.mode-grid.landscape.no-piles {
+  grid-template-areas: 'grid hud';
+  grid-template-columns: auto auto;
+}
+
+.table.mode-grid.landscape .piles {
+  grid-template-columns: var(--pile-w);
+  gap: calc(var(--pile-h) * 0.25);
+}
+
+.table.mode-grid.landscape .hud {
+  flex-direction: column;
+  width: auto;
+  max-width: none;
+  align-self: center;
+  gap: 10px;
+}
+
+.table.mode-grid.landscape .hud-stats {
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.95rem;
+}
+
 /* Facile on a wide screen: tray beside the grid, vertically centred */
 .table.mode-tray.landscape {
   grid-template-areas: 'piles piles' 'grid tray' 'hud hud';

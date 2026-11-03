@@ -66,6 +66,16 @@ ghost-dismiss, ghost-click-through and victory-screen hazards. Final rules (cons
 - On a wide screen the Facile tray sits **beside** the grid (vertically centred) instead of below it → bigger tiles,
   HUD always visible.
 
+### FR-9 Landscape board & adaptive shape *(added 2026-11-03 20:49, Riccardo's feedback + experiment)*
+- Medio/Difficile on a wide screen: decks become a column on the left, HUD a column on the right.
+- The board shape is chosen at game start among 5×6, 6×5, 7×4, 8×4 to maximise tile size for the viewport
+  (ties → more slots). Experiment (`scripts/experiments/board-shapes.ts`): on a 1024×538 laptop window tiles grow
+  from 63px (5×6) to 95px (8×4); phones in portrait keep 5×6.
+- Gameplay never waits on an animation that might not finish (`settle()` timeout fallback).
+
+### FR-10 Carlesso family card back
+- Ornate navy/gold card back with Riccardo, Kate, Ale and Seby in gold medallions around Gamberone.
+
 ## 3. Non-Functional
 - Same quality gates as the MVP: TDD, ≥ 80% coverage, e2e on the production build, axe 0 serious violations.
 

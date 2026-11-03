@@ -49,3 +49,24 @@ export function confetti(x: number, y: number, count = 70): HTMLElement | null {
   setTimeout(() => layer.remove(), 2200);
   return layer;
 }
+
+/**
+ * Resolves when the animation finishes, is cancelled, or `ms` (+ slack) elapse — whichever comes first.
+ * Gameplay must never hang on an animation: if frames stop (tab in background, throttled device) the game goes on.
+ */
+export function settle(anim: Animation | null | undefined, ms: number): Promise<void> {
+  if (!anim) return Promise.resolve();
+  return new Promise<void>((resolve) => {
+    const timer = setTimeout(resolve, ms + 150);
+    anim.finished.then(
+      () => {
+        clearTimeout(timer);
+        resolve();
+      },
+      () => {
+        clearTimeout(timer);
+        resolve();
+      },
+    );
+  });
+}

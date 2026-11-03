@@ -22,7 +22,8 @@ The start screen has just three buttons — the game picks the photos itself and
 | 🙂 **Medio** | drag tiles **inside the board** (or tap-tap) until the 4 pieces form their 2×2 block | 16 | 1–3 |
 | 🧠 **Difficile** | same, but the dealer guarantees **exactly one** doable photo | 24 | 1 |
 
-Medio and Difficile deliberately **overflow** the 30-slot board: the extra tiles wait in the decks, which is what
+On wide screens the board turns into 8×4 or 7×4 (≈ 50% bigger tiles) with the decks and the HUD on the sides;
+phones in portrait keep the classic 5×6. Medio and Difficile deliberately **overflow** the board: the extra tiles wait in the decks, which is what
 makes the game interesting. After a completed photo the celebration lasts ~2s; **one tap anywhere skips it**.
 
 The "exactly one" rule holds as long as the maths allows it: with few photos left, more become doable. Packs with

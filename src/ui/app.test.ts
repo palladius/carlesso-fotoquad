@@ -109,6 +109,9 @@ async function solveOne(app: App) {
 
 beforeEach(() => {
   vi.useFakeTimers();
+  // portrait phone by default → classic 5×6 board (tests rely on its 2×2 slot indices)
+  window.innerWidth = 390;
+  window.innerHeight = 844;
   localStorage.clear();
   document.body.innerHTML = '<div id="app"></div>';
   root = $('#app');
@@ -145,6 +148,17 @@ describe('start screen', () => {
     await start(app, 'facile');
     expect(app.currentState?.options.mode).toBe('tray');
     expect(app.currentState?.photoIds).toHaveLength(6);
+  });
+
+  it('picks the board shape from the viewport at game start (wide screen → 8×4)', async () => {
+    window.innerWidth = 1024;
+    window.innerHeight = 538;
+    const app = makeApp();
+    await start(app, 'medio');
+    expect(app.currentState?.options).toMatchObject({ columns: 8, rows: 4 });
+    expect($$('.slot')).toHaveLength(32);
+    window.innerWidth = 390;
+    window.innerHeight = 844;
   });
 
   it('consecutive games rotate photos (FR-3)', async () => {
@@ -389,15 +403,24 @@ describe('tray mode (Facile)', () => {
     window.innerHeight = 844;
     window.dispatchEvent(new Event('resize'));
     expect($('.table').classList.contains('landscape')).toBe(false);
-    window.innerWidth = 1024;
-    window.innerHeight = 768;
+    window.innerWidth = 390;
+    window.innerHeight = 844;
   });
 
   it('keeps the decks when the game overflows', async () => {
+    window.innerWidth = 1024;
+    window.innerHeight = 768;
     const app = makeApp(7);
-    await start(app, 'medio'); // 12 photos = 48 tiles > 30 slots
+    await start(app, 'medio'); // 12 photos = 48 tiles > board slots
     expect($('.table').classList.contains('no-piles')).toBe(false);
-    expect($('.table').classList.contains('landscape')).toBe(false); // landscape layout is a tray-mode thing
+    // landscape: piles and HUD move beside the board
+    expect($('.table').classList.contains('landscape')).toBe(true);
+    window.innerWidth = 390;
+    window.innerHeight = 844;
+    window.dispatchEvent(new Event('resize'));
+    expect($('.table').classList.contains('landscape')).toBe(false);
+    window.innerWidth = 390;
+    window.innerHeight = 844;
   });
 
   it('tap sends a tile to the tray and back; full game ends in victory', async () => {

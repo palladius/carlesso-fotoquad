@@ -1,12 +1,11 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
-import { fresh, limitPhotos, startLevel } from './helpers';
+import { blockTargets, fresh, limitPhotos, startLevel } from './helpers';
 
 // Celebration popup — tests derived from the adversarial review (track rotation_ux_20261103).
 test.use({ serviceWorkers: 'block' });
 
 const QUADS = ['TL', 'TR', 'BL', 'BR'];
-const TARGETS = [0, 1, 5, 6];
 const popup = (page: Page) => page.locator('.match-popup');
 
 async function hintedPhoto(page: Page): Promise<string> {
@@ -19,11 +18,15 @@ async function hintedPhoto(page: Page): Promise<string> {
 /** Swaps a photo into slots 0,1,5,6 with tap-tap; the completing move (BR → slot 6) is done by `last`. */
 async function assemble(page: Page, last: (from: number, to: number) => Promise<void>) {
   const photo = await hintedPhoto(page);
-  // make sure the completing move is the one performed by `last` (BR must not already sit in slot 6)
+  const TARGETS = await blockTargets(page);
+  const brSlot = TARGETS[3] as number;
+  // Park BR in the last slot (outside every target) so that no preparatory swap can push it into place:
+  // the completing move must be the one performed by `last`.
+  const parking = (await page.locator('.slot').count()) - 1;
   const br = Number(await page.locator(`.slot:has([data-tile="${photo}#BR"])`).getAttribute('data-slot'));
-  if (br === 6) {
-    await page.locator('.slot[data-slot="6"] .tile').click();
-    await page.locator('.slot[data-slot="10"]').click();
+  if (br !== parking) {
+    await page.locator(`[data-tile="${photo}#BR"]`).click();
+    await page.locator(`.slot[data-slot="${parking}"]`).click();
   }
   const moves: [number, number][] = [];
   for (let k = 0; k < 4; k++) {
@@ -37,9 +40,10 @@ async function assemble(page: Page, last: (from: number, to: number) => Promise<
       await page.locator(`.slot[data-slot="${TARGETS[k]}"]`).click();
     }
   }
+  await page.waitForTimeout(350); // let the last FLIP animation settle before the completing gesture
   const id = `${photo}#BR`;
   const from = Number(await page.locator(`.slot:has([data-tile="${id}"])`).getAttribute('data-slot'));
-  await last(from, 6);
+  await last(from, brSlot);
 }
 
 const tapTap = (page: Page) => async (from: number, to: number) => {
@@ -63,7 +67,7 @@ test('A: one tap dismisses the popup within 500ms and the board is usable right 
   await expect(popup(page)).toBeHidden();
   expect(Date.now() - t0).toBeLessThan(500);
   await expect(page.locator('.hud-solved')).toHaveText('📸 1 / 3');
-  await page.locator('.slot[data-slot="10"] .tile').click();
+  await page.locator('.grid .tile').last().click();
   await expect(page.locator('.tile.selected')).toHaveCount(1);
 });
 
@@ -134,7 +138,10 @@ test('F: reduced motion + keyboard: Escape dismisses and focus returns to the bo
   await assemble(page, async (from, to) => {
     await page.locator(`.slot[data-slot="${from}"] .tile`).focus();
     await page.keyboard.press('Enter');
-    await page.locator(`.slot[data-slot="${to}"] .tile`).focus();
+    // the target may be an empty slot (small boards): then the slot itself is the keyboard target
+    const target = page.locator(`.slot[data-slot="${to}"]`);
+    if (await target.locator('.tile').count()) await target.locator('.tile').focus();
+    else await target.focus();
     await page.keyboard.press('Enter');
   });
   await expect(popup(page)).toBeVisible();
@@ -150,7 +157,11 @@ test('G: no serious accessibility violations while the popup is open', async ({ 
   await setup(page);
   await assemble(page, tapTap(page));
   await expect(popup(page)).toBeVisible();
-  const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+  await page.waitForTimeout(500); // scan the settled popup, not a mid-animation frame
+  const results = await new AxeBuilder({ page })
+    .withTags(['wcag2a', 'wcag2aa'])
+    .exclude('.confetti') // decorative, aria-hidden, moving particles
+    .analyze();
   const serious = results.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical');
   expect(serious.map((v) => `${v.id}: ${v.nodes.map((n) => n.html).join(' | ')}`)).toEqual([]);
 });

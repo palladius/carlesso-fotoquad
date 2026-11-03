@@ -55,6 +55,24 @@ describe('initial deal (property tests)', () => {
     });
   }
 
+  for (const [columns, rows] of [
+    [8, 4],
+    [7, 4],
+    [6, 5],
+  ] as const) {
+    it(`other board shapes (${columns}×${rows}) keep the invariants`, () => {
+      for (const seed of SEEDS.slice(0, 80)) {
+        const g = createGame(makePhotos(16), seed, { ...DEFAULT_OPTIONS, columns, rows });
+        expect(g.grid).toHaveLength(columns * rows);
+        expect(completablePhotos(g)).toHaveLength(1);
+        expect(findBlocks(g.grid, columns)).toEqual([]);
+        let s = g;
+        while (s.finishedAt === null) s = assemble(s, completablePhotos(s)[0] as string).state;
+        expect(s.solved).toHaveLength(16);
+      }
+    });
+  }
+
   it('Normale with a big deck shows exactly one completable photo', () => {
     for (const seed of SEEDS) expect(completablePhotos(createGame(makePhotos(25), seed))).toHaveLength(1);
   });

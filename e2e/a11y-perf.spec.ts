@@ -1,4 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
+import { expectFullBoard } from './helpers';
 import { expect, test, type Page } from '@playwright/test';
 
 async function seriousViolations(page: Page) {
@@ -18,7 +19,7 @@ test('accessibility: start screen and table have no serious/critical WCAG A/AA v
   expect(await seriousViolations(page)).toEqual([]);
 
   await page.locator('[data-level="medio"]').click();
-  await expect(page.locator('.grid .tile')).toHaveCount(30);
+  await expectFullBoard(page);
   expect(await seriousViolations(page)).toEqual([]);
 });
 
@@ -27,7 +28,7 @@ test('accessibility: keyboard focus order reaches the HUD buttons and the tiles'
   await page.evaluate(() => localStorage.clear());
   await page.reload();
   await page.locator('[data-level="medio"]').click();
-  await expect(page.locator('.grid .tile')).toHaveCount(30);
+  await expectFullBoard(page);
   await page.keyboard.press('Tab');
   await expect(page.locator('.grid .tile').first()).toBeFocused();
 });

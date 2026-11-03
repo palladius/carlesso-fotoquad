@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { dismissPopup, fresh, limitPhotos, startLevel } from './helpers';
+import { blockTargets, dismissPopup, fresh, limitPhotos, slotCount, startLevel } from './helpers';
 
 test.use({ serviceWorkers: 'block' });
 
@@ -13,7 +13,7 @@ async function solveWithHint(page: Page) {
   await page.getByRole('button', { name: 'Aiuto' }).click();
   const first = await page.locator('.tile.hint').first().getAttribute('data-tile');
   const photo = (first as string).split('#')[0];
-  const targets = [0, 1, 5, 6];
+  const targets = await blockTargets(page);
   for (let k = 0; k < 4; k++) {
     const id = `${photo}#${QUADS[k]}`;
     const from = await slotOf(page, id);
@@ -33,7 +33,7 @@ test('Medio with the full demo library overflows the board', async ({ page }) =>
   await fresh(page);
   await limitPhotos(page, 100); // demo photos only (no private ones)
   await startLevel(page, 'medio');
-  await expect(page.locator('.grid .tile')).toHaveCount(30);
+  await expect(page.locator('.grid .tile')).toHaveCount(await slotCount(page));
   const piles = await page.locator('.pile-count').allTextContents();
   expect(piles.reduce((n, t) => n + Number(t || 0), 0)).toBeGreaterThan(0);
 });

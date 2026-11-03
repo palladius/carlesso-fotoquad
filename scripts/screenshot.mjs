@@ -24,7 +24,8 @@ for (const [name, vp] of [
   await page.getByRole('button', { name: 'Aiuto' }).click();
   const first = await page.locator('.tile.hint').first().getAttribute('data-tile');
   const photo = first.split('#')[0];
-  const targets = [0, 1, 5, 6];
+  const cols = Number(await page.locator('.grid').evaluate((el) => el.style.getPropertyValue('--cols')));
+  const targets = [0, 1, cols, cols + 1];
   for (const [k, q] of ['TL', 'TR', 'BL', 'BR'].entries()) {
     const from = Number(
       await page.locator(`.slot:has([data-tile="${photo}#${q}"])`).getAttribute('data-slot'),

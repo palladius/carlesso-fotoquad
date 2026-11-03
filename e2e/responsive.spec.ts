@@ -1,3 +1,4 @@
+import { expectFullBoard } from './helpers';
 import { expect, test } from '@playwright/test';
 
 const VIEWPORTS = [
@@ -14,7 +15,7 @@ for (const vp of VIEWPORTS) {
     await page.evaluate(() => localStorage.clear());
     await page.reload();
     await page.locator('[data-level="medio"]').click();
-    await expect(page.locator('.grid .tile')).toHaveCount(30);
+    await expectFullBoard(page);
     const m = await page.evaluate(() => {
       const grid = document.querySelector('.grid')!.getBoundingClientRect();
       const hud = document.querySelector('.hud')!.getBoundingClientRect();

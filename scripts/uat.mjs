@@ -46,7 +46,8 @@ for (let round = 0; round < 3; round++) {
   const ids = await page.locator('.tile.hint').evaluateAll((els) => els.map((e) => e.dataset.tile));
   report.completableCounts.push(ids.length / 4);
   const photo = ids[0].split('#')[0];
-  const targets = [0, 1, 5, 6];
+  const cols = Number(await page.locator('.grid').evaluate((el) => el.style.getPropertyValue('--cols')));
+  const targets = [0, 1, cols, cols + 1];
   for (const [k, q] of ['TL', 'TR', 'BL', 'BR'].entries()) {
     const from = Number(
       await page.locator(`.slot:has([data-tile="${photo}#${q}"])`).getAttribute('data-slot'),

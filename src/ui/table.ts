@@ -3,7 +3,7 @@ import { QUADRANTS, type GameEvent, type GameState, type Quadrant, type TileId }
 import type { SlicedPhoto } from '../platform/slicer';
 import { at } from '../engine/util';
 import { h, reducedMotion, sleep } from './dom';
-import { confetti, flipFrom } from './fx';
+import { confetti, flipFrom, settle } from './fx';
 import { computeTileSize } from './layout';
 
 /**
@@ -194,15 +194,19 @@ export class TableView {
   layout(): void {
     const width = window.innerWidth;
     const height = window.innerHeight;
-    // Facile on a wide screen: the tray goes beside the grid instead of below it.
-    const landscape = this.trayMode && width > height * 1.1;
+    // On wide screens height is the scarce resource:
+    // - Facile: the tray goes beside the grid;
+    // - Medio/Difficile: the piles become a column on the left and the HUD a column on the right.
+    const landscape = width > height * 1.1;
     const gridRows = this.state.grid.length / this.state.options.columns;
     const { w, h: th } = computeTileSize(
       width,
       height,
       this.state.options.columns,
       gridRows + (this.trayMode && !landscape ? 2.3 : 0),
-      { piles: this.hasPiles, extraCols: landscape ? 2.4 : 0 },
+      this.trayMode
+        ? { piles: this.hasPiles, extraCols: landscape ? 2.4 : 0 }
+        : { piles: this.hasPiles, pilesBeside: landscape, hudBeside: landscape },
     );
     this.root.style.setProperty('--tile-w', `${w}px`);
     this.root.style.setProperty('--tile-h', `${th}px`);
@@ -620,12 +624,7 @@ export class TableView {
           { duration: TIMING.INTRO_MS, easing: 'cubic-bezier(.2,.9,.3,1.15)' },
         );
       }
-      const introDone = intro
-        ? intro.finished.then(
-            () => undefined,
-            () => undefined,
-          )
-        : Promise.resolve();
+      const introDone = settle(intro, TIMING.INTRO_MS);
       await Promise.race([introDone.then(() => wait(TIMING.HOLD_MS)), dismissedP]);
       if (dismissed && intro && intro.playState === 'running') {
         try {
@@ -636,12 +635,11 @@ export class TableView {
       }
       if (signal.aborted) return;
       if (motion && typeof popup.animate === 'function') {
-        await popup
-          .animate([{ opacity: 1 }, { opacity: 0 }], {
-            duration: dismissed ? TIMING.FADE_DISMISS_MS : TIMING.FADE_MS,
-            fill: 'forwards',
-          })
-          .finished.catch(() => undefined);
+        const fadeMs = dismissed ? TIMING.FADE_DISMISS_MS : TIMING.FADE_MS;
+        await settle(
+          popup.animate([{ opacity: 1 }, { opacity: 0 }], { duration: fadeMs, fill: 'forwards' }),
+          fadeMs,
+        );
       }
       // keep the shield until the dismissing finger lifts, so pointerup/click can't land underneath
       if (downPointer !== null) await Promise.race([pointerUpP, wait(TIMING.POINTERUP_CAP_MS)]);
@@ -663,8 +661,8 @@ export class TableView {
       tiles.map((el) => {
         if (!el || !motion || typeof el.animate !== 'function') return Promise.resolve();
         const b = el.getBoundingClientRect();
-        return el
-          .animate(
+        return settle(
+          el.animate(
             [
               { transform: 'none', opacity: 1 },
               {
@@ -673,9 +671,9 @@ export class TableView {
               },
             ],
             { duration: TIMING.DISCARD_MS, easing: 'ease-in', fill: 'forwards' },
-          )
-          .finished.then(() => undefined)
-          .catch(() => undefined);
+          ),
+          TIMING.DISCARD_MS,
+        );
       }),
     );
     for (const i of slots) {

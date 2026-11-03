@@ -14,6 +14,7 @@ import { PHOTOS_PER_LEVEL, selectPhotos } from '../platform/rotation';
 import type { Difficulty } from '../platform/storage';
 import type { SlicedPhoto } from '../platform/slicer';
 import type { GameStorage } from '../platform/storage';
+import { chooseBoardShape } from './layout';
 import { albumScreen, loadingScreen, startScreen, victoryScreen } from './screens';
 import { TableView } from './table';
 
@@ -105,7 +106,8 @@ export class App {
     if (!ready.length) return this.showStart();
     this.d.storage.markPlayed(ready.map((p) => p.id));
     this.d.storage.setDifficulty(level);
-    const state = createGame(ready, seed, optionsFor(level), this.d.now());
+    const shape = chooseBoardShape(window.innerWidth, window.innerHeight, level === 'facile');
+    const state = createGame(ready, seed, { ...optionsFor(level), ...shape }, this.d.now());
     await this.openGame(level, state);
   }
 
