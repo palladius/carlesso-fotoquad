@@ -11,3 +11,7 @@ Automated: vitest 105/105 (coverage 95.96%), Playwright 22 passed / 4 skipped by
 Phase 5b checkpoint verification report
 
 Automated: vitest 105/105 (coverage 95.96%), Playwright 22 passed / 4 skipped by design (full games in grid+tray modes, drag&drop, resume, difficulty, offline PWA, responsive). Manual verification: Riccardo and kids played on localhost on 2026-11-03 ('il gioco e MOLTO BELLO', 'il gioco e fichissimo!'); their feedback produced Phase 5b.
+
+Phase 6 checkpoint verification report
+
+Automated: vitest 105/105 (coverage 95.96%), Playwright 22 passed / 4 skipped by design (full games in grid+tray modes, drag&drop, resume, difficulty, offline PWA, responsive). Manual verification: Riccardo and kids played on localhost on 2026-11-03 ('il gioco e MOLTO BELLO', 'il gioco e fichissimo!'); their feedback produced Phase 5b.
