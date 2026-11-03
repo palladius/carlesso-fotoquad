@@ -1,1 +1,5 @@
 PWA via vite-plugin-pwa (generateSW, clientsClaim/skipWaiting, precache 38 entries incl. all demo photos), registerSW in production only. e2e/pwa.spec.ts: offline reload + play, manifest validity. e2e/responsive.spec.ts: no overflow at 360x640, 390x844, 1440x900. card-back recompressed 544K -> 52K. README rewritten (levels, private photos, dev commands). e2e: 22 passed / 4 skipped (by design).
+
+Phase 4 checkpoint verification report
+
+Automated: vitest 105/105 (coverage 95.96%), Playwright 22 passed / 4 skipped by design (full games in grid+tray modes, drag&drop, resume, difficulty, offline PWA, responsive). Manual verification: Riccardo and kids played on localhost on 2026-11-03 ('il gioco e MOLTO BELLO', 'il gioco e fichissimo!'); their feedback produced Phase 5b.
