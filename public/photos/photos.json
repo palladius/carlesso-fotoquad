@@ -68,5 +68,117 @@
     "title": "Cavalieri e il drago",
     "year": 2026,
     "tags": ["ale", "sebi", "dreamworks"]
+  },
+  {
+    "id": "scuba_divers",
+    "src": "demo/scuba_divers.jpg",
+    "title": "Sub tra i coralli",
+    "year": 2026,
+    "tags": ["ale", "sebi", "mare"]
+  },
+  {
+    "id": "oktoberfest",
+    "src": "demo/oktoberfest.jpg",
+    "title": "Oktoberfest in lederhosen",
+    "year": 2026,
+    "tags": ["ale", "sebi", "festa"]
+  },
+  {
+    "id": "rock_band",
+    "src": "demo/rock_band.jpg",
+    "title": "La band dei fratelli",
+    "year": 2026,
+    "tags": ["ale", "sebi", "musica"]
+  },
+  {
+    "id": "pizza_chefs",
+    "src": "demo/pizza_chefs.jpg",
+    "title": "Pizzaioli napoletani",
+    "year": 2026,
+    "tags": ["ale", "sebi", "cucina"]
+  },
+  {
+    "id": "firefighters",
+    "src": "demo/firefighters.jpg",
+    "title": "Pompieri salva-gatti",
+    "year": 2026,
+    "tags": ["ale", "sebi"]
+  },
+  {
+    "id": "dino_museum",
+    "src": "demo/dino_museum.jpg",
+    "title": "Il ruggito del T-Rex",
+    "year": 2026,
+    "tags": ["ale", "sebi"]
+  },
+  {
+    "id": "pirates",
+    "src": "demo/pirates.jpg",
+    "title": "Pirati all'arrembaggio",
+    "year": 2026,
+    "tags": ["ale", "sebi", "mare"]
+  },
+  {
+    "id": "snowball_fight",
+    "src": "demo/snowball_fight.jpg",
+    "title": "Battaglia di palle di neve",
+    "year": 2026,
+    "tags": ["ale", "sebi", "neve"]
+  },
+  {
+    "id": "rocket_launch",
+    "src": "demo/rocket_launch.jpg",
+    "title": "Missione razzo in giardino",
+    "year": 2026,
+    "tags": ["ale", "sebi"]
+  },
+  {
+    "id": "football_match",
+    "src": "demo/football_match.jpg",
+    "title": "Gol in rovesciata!",
+    "year": 2026,
+    "tags": ["ale", "sebi", "sport"]
+  },
+  {
+    "id": "camping_stars",
+    "src": "demo/camping_stars.jpg",
+    "title": "Campeggio sotto le stelle",
+    "year": 2026,
+    "tags": ["ale", "sebi", "viaggi"]
+  },
+  {
+    "id": "halloween",
+    "src": "demo/halloween.jpg",
+    "title": "Dolcetto o scherzetto",
+    "year": 2026,
+    "tags": ["ale", "sebi", "festa"]
+  },
+  {
+    "id": "christmas_tree",
+    "src": "demo/christmas_tree.jpg",
+    "title": "L'albero di Natale",
+    "year": 2026,
+    "tags": ["ale", "sebi", "festa"]
+  },
+  {
+    "id": "venice_carnival",
+    "src": "demo/venice_carnival.jpg",
+    "title": "Carnevale a Venezia",
+    "year": 2026,
+    "tags": ["ale", "sebi", "viaggi"]
+  },
+  {
+    "id": "gamberone_rockstar",
+    "src": "demo/gamberone_rockstar.jpg",
+    "title": "Gamberone rockstar",
+    "year": 2026,
+    "tags": ["gamberone"]
+  },
+  {
+    "id": "gamberone_surfer",
+    "src": "demo/gamberone_surfer.jpg",
+    "title": "Gamberone surfista",
+    "year": 2026,
+    "tags": ["gamberone", "mare"]
   }
 ]
