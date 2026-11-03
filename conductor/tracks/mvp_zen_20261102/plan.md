@@ -111,7 +111,7 @@ Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.m
 - [x] Task: README update (how to add private family photos, dev commands, live URL) and deploy to GitHub Pages `cc35f7b`
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `1baef87`
 
-## Phase 8: Convergence (Pass 1)
+## Phase 8: Convergence (Pass 1) [checkpoint: 1baef87]
 - [x] Task: [CONVERGE][CRITICAL] Remove or justify type assertions (`as X`) in `src/` per code_styleguides/typescript.md §1 "Type Assertions" (contradicts) — ~50 unjustified casts, mostly `table.ts` (14) and `dealer.ts` (10) `30bdf1c`
     - [x] Replace casts with typed helpers / narrowing; keep only unavoidable ones with a `// cast:` justification
     - [x] Verify tsc, lint, unit + e2e still pass
@@ -132,4 +132,4 @@ Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.m
     - [x] Add aria-label/title "Foto risolte" / "Mosse" + unit test
 - [x] Task: [CONVERGE][LOW] Review unrequested leftovers (unrequested): dead `src/app.ts` APP_NAME (+ its smoke test) and stale hint-click flow in `scripts/screenshot.mjs` `c8bd89c`
     - [x] Remove dead code; fix or simplify the screenshot helper
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `1baef87`
