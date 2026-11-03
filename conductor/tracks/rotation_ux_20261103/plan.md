@@ -12,10 +12,10 @@ Track: `rotation_ux_20261103` · Spec: [spec.md](./spec.md) · Workflow: [workfl
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2: Simpler start screen
-- [ ] Task: Start screen with 3 level buttons that start a game; small Continua + Album (FR-1)
-    - [ ] Write tests (jsdom): 3 buttons, tap starts a game with the level's photo count, Continua/Album
-    - [ ] Implement; remove packs UI and `packs.ts`
-- [ ] Task: Update e2e tests to the new start flow
+- [x] Task: Start screen with 3 level buttons that start a game; small Continua + Album (FR-1) `15249a8`
+    - [x] Write tests (jsdom): 3 buttons, tap starts a game with the level's photo count, Continua/Album
+    - [x] Implement; remove packs UI and `packs.ts`
+- [x] Task: Update e2e tests to the new start flow `15249a8`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 3: Snappy celebration (adversarially reviewed)
@@ -25,6 +25,6 @@ Track: `rotation_ux_20261103` · Spec: [spec.md](./spec.md) · Workflow: [workfl
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 4: Content
-- [ ] Task: 16 new demo illustrations + manifest entries (FR-6)
+- [x] Task: 16 new demo illustrations + manifest entries (FR-6) `612b1fb`
 - [ ] Task: Real private photos pipeline documented (Immich → `public/photos/private/`) (FR-5)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
