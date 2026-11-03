@@ -122,14 +122,14 @@ Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.m
     - [ ] Write e2e: axe-core scan of start screen and table (no serious/critical violations), HUD contrast WCAG AA
     - [ ] Write e2e: cached (PWA) reload reaches an interactive start screen in < 200ms (navigation timing)
     - [ ] Fix any violations found
-- [ ] Task: [CONVERGE][MEDIUM] Keyboard parity for moving a tile into an empty slot per spec.md FR-4.1 / AC-5 (partial) — empty slots are not focusable
-    - [ ] Write test: keyboard select tile + activate empty slot moves it
-    - [ ] Make empty slots focusable/activatable
-- [ ] Task: [CONVERGE][MEDIUM] Tap/drag feedback sound within 100ms per product-guidelines.md UX #2 (partial) — selecting a tile or starting a drag is silent
-    - [ ] Write test: selection and drag start play the `tap` sound
-    - [ ] Implement
-- [ ] Task: [CONVERGE][LOW] Accessible HUD labels per spec.md FR-3 ("Foto risolte: X / N", moves) (partial) — HUD shows emoji-only counters
-    - [ ] Add aria-label/title "Foto risolte" / "Mosse" + unit test
-- [ ] Task: [CONVERGE][LOW] Review unrequested leftovers (unrequested): dead `src/app.ts` APP_NAME (+ its smoke test) and stale hint-click flow in `scripts/screenshot.mjs`
-    - [ ] Remove dead code; fix or simplify the screenshot helper
+- [x] Task: [CONVERGE][MEDIUM] Keyboard parity for moving a tile into an empty slot per spec.md FR-4.1 / AC-5 (partial) — empty slots are not focusable `c8bd89c`
+    - [x] Write test: keyboard select tile + activate empty slot moves it
+    - [x] Make empty slots focusable/activatable
+- [x] Task: [CONVERGE][MEDIUM] Tap/drag feedback sound within 100ms per product-guidelines.md UX #2 (partial) — selecting a tile or starting a drag is silent `c8bd89c`
+    - [x] Write test: selection and drag start play the `tap` sound
+    - [x] Implement
+- [x] Task: [CONVERGE][LOW] Accessible HUD labels per spec.md FR-3 ("Foto risolte: X / N", moves) (partial) — HUD shows emoji-only counters `c8bd89c`
+    - [x] Add aria-label/title "Foto risolte" / "Mosse" + unit test
+- [x] Task: [CONVERGE][LOW] Review unrequested leftovers (unrequested): dead `src/app.ts` APP_NAME (+ its smoke test) and stale hint-click flow in `scripts/screenshot.mjs` `c8bd89c`
+    - [x] Remove dead code; fix or simplify the screenshot helper
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
