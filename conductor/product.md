@@ -6,7 +6,7 @@
 ## Summary
 A match-4 solitaire puzzle, built as an offline-first PWA, where uniformly-portrait family photos are
 auto-sliced into 4 quadrants and reassembled on a green-felt solitaire table (5 draw decks on top, a 5×6
-tableau grid, a 2×2 assembly tray). No server, no login, no ads.
+tableau grid kept always full). No server, no login, no ads.
 
 Full source spec: [`docs/spec/SPEC.md`](../docs/spec/SPEC.md).
 
@@ -27,8 +27,9 @@ completed picture is a memory (Ale & Seby at tennis camp, Zurich trams, holidays
 ## Core Loop
 1. N portrait photos → each auto-sliced client-side (Canvas) into TL / TR / BL / BR tiles → deck of N×4 tiles.
 2. Tiles are shuffled; 25–30 are visible on the tableau, the rest wait in 5 face-down decks.
-3. Player taps tiles; each tile flies to its natural slot in the 2×2 assembly tray.
-4. When the 4 quadrants of the same photo are in the tray: they merge, a celebratory popup shows the full photo
+3. Player drags tiles within the tableau, swapping them, to rebuild a photo as an adjacent 2×2 block
+   (TL TR / BL BR). Only one photo (Normale) or up to 3 (Facile) is completable at any time.
+4. When the 4 quadrants of the same photo form their 2×2 block: a celebratory popup shows the full photo
    with its caption (~1.5s), chime + confetti.
 5. The 4 tiles are discarded towards the Album; 4 new tiles cascade from the decks into the empty slots.
 6. When all decks are empty and the last photo is rebuilt → Grand Finale + interactive photo Album.

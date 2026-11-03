@@ -4,7 +4,7 @@
 
 ## 1. Overview
 Deliver the first playable, installable, offline version of Carlesso FotoQuad: the full match-4 core loop in
-**Zen mode**, with a 2×2 assembly tray, deck refill, hint, victory screen + photo album, local persistence and
+**Zen mode**, with in-grid drag & drop 2×2 assembly, difficulty levels, deck refill, hint, victory screen + photo album, local persistence and
 PWA offline support. Shuffle/Pesca Tattica and Party modes are out of scope (future tracks).
 
 ## 2. Functional Requirements
@@ -21,30 +21,37 @@ PWA offline support. Shuffle/Pesca Tattica and Party modes are out of scope (fut
   (`viaggi`), **Gamberone & Dreamworks** (`gamberone`), **Tutto l'Archivio** (all). Empty packs are hidden.
 
 ### FR-3 Table layout
-- **Top bar**: 5 face-down draw piles with card-back art and remaining-count badge. Remaining tiles are split
-  round-robin across the 5 piles.
-- **Tableau**: 5 columns × 6 rows (30 slots). If the deck has fewer than 30 tiles, all are shown.
-- **Assembly tray**: 4 slots laid out 2×2 (TL, TR / BL, BR).
+- **Top bar**: 5 face-down draw piles with card-back art and remaining-count badge.
+- **Tableau**: 5 columns × 6 rows (30 slots), always kept **full** while the piles have cards. Small decks use
+  fewer rows (minimum 2, so a 2×2 block always fits).
+- **No assembly tray** *(revised 2026-11-03)*.
+- **Minimal borders** *(revised 2026-11-03)*: every pixel of border hides photo. Tiles have no frame, ~1px
+  separation (2px gap) and at most a ~3px corner radius, so a correct 2×2 block reads as the whole photo.
 - **HUD**: "Foto risolte: X / N", moves counter, Hint button, Album button, mute toggle, menu.
 
-### FR-4 Core loop
-1. Tapping a grid tile moves it (FLIP animation) into the tray slot matching its quadrant; its grid slot becomes empty.
-2. **Conflict rule**: if that tray slot already holds a tile of a *different* photo, the new tile replaces it and
-   the old tile flies back to the grid (to the slot just vacated).
-3. Tapping a tile in the tray sends it back to an empty grid slot.
-4. Each tile placement counts as 1 move.
-5. **Match**: when all 4 tray slots hold the 4 quadrants of the same photo → seams disappear, the full photo pops up
-   centred for ~1.5s with its title, chime + confetti, then the 4 tiles are discarded towards the Album icon.
-6. **Refill**: empty grid slots are refilled from the draw piles with a cascading animation until piles are empty.
+### FR-4 Core loop *(revised 2026-11-03, user feedback: tap-to-tray was too easy)*
+1. The player **drags a tile within the tableau** and drops it on another slot: the two tiles **swap** places
+   (or the tile moves, if the target slot is empty). Tap-to-select + tap-target is an equivalent alternative
+   (accessibility, keyboard).
+2. Each swap/move counts as 1 move.
+3. **Match**: when 4 tiles of the same photo sit **adjacent in their natural 2×2 arrangement** (TL TR / BL BR)
+   anywhere on the tableau → the full photo pops up centred for ~1.5s with its title, chime + confetti, then the
+   4 tiles are discarded towards the Album icon.
+4. **Refill**: 4 new tiles are dealt from the piles into the 4 vacated slots (cascading animation), until the
+   piles are empty.
 
-### FR-5 Solvability guarantee
-- After the initial deal and after every refill, the visible set (grid + tray) MUST contain at least one complete
-  photo (all 4 quadrants), as long as any photo remains unsolved. The dealer achieves this by choosing/swapping
-  which tiles are drawn from the piles (deterministic given the seed). Grid order is shuffled so the 4 pieces of a
-  photo are never all adjacent in their natural 2×2 arrangement.
+### FR-5 Difficulty & solvability guarantee *(revised 2026-11-03)*
+- After the initial deal and after every refill, the tableau MUST contain **at least one** completable photo
+  (all 4 quadrants visible) while photos remain unsolved, and **at most `maxCompletable`**: 1 in **Normale**
+  (default), 3 in **Facile** — whenever that is mathematically possible.
+- The dealer achieves this by choosing which hidden pile tiles are drawn (deterministic given the seed).
+- Note: with U unsolved photos, V visible tiles and P = 4U − V tiles in the piles, at least U − P photos are
+  necessarily complete. Decks with ≥ 10–15 photos per pack keep the "only one" rule for most of the game; with
+  fewer photos the end-game naturally has more completable photos.
+- New tiles are never dealt into an already-solved natural 2×2 arrangement.
 
 ### FR-6 Hint (Zen)
-- The Hint button highlights (border + glow + gentle pulse) the 4 visible tiles of one completable photo for ~3s.
+- The Hint button highlights (glow + gentle pulse) the 4 tiles of one completable photo for ~3s.
   Hint usage is counted in the score summary.
 
 ### FR-7 Victory & Album
@@ -83,9 +90,9 @@ PWA offline support. Shuffle/Pesca Tattica and Party modes are out of scope (fut
 ## 4. Acceptance Criteria
 1. With the demo manifest, every photo is split into 4 correct geometric quadrants (unit-tested on pixel data).
 2. The initial grid is shuffled, non-trivial, and contains at least one completable photo (property-tested over many seeds).
-3. Placing 4 quadrants of the same photo in the tray triggers the completion animation and removes them.
+3. Arranging the 4 quadrants of a photo as an adjacent 2×2 block (by drag & drop swaps) triggers the completion animation and removes them.
 4. The 4 vacated slots are refilled from the piles until exhaustion; pile counters update.
-5. Conflict rule and tap-to-return behave as specified.
+5. Drag & drop and tap-tap swapping work with mouse, touch and keyboard; the tableau stays full and holds exactly one completable photo in Normale (≤ 3 in Facile) whenever mathematically possible (property-tested).
 6. Completing all photos shows the victory screen with recap; "Gioca ancora" starts a fresh game; Album shows unlocked photos.
 7. Reloading mid-game restores the exact state.
 8. Layout works at 360×640, 390×844 and 1440×900 without overflow (Playwright screenshots).

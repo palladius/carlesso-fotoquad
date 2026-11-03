@@ -78,6 +78,19 @@ Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.m
 - [ ] Task: Mute toggle & audio hooks on engine events
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
+## Phase 5b: Gameplay Revision — in-grid drag & drop (user feedback 2026-11-03)
+- [ ] Task: Engine — SWAP action, natural 2×2 block match detection, refill into vacated slots; remove tray (schema v2)
+    - [ ] Write tests: swap/move, block detection anywhere on the grid, refill, full games via a swap-playing bot
+    - [ ] Implement reducer + serialisation v2
+- [ ] Task: Dealer — difficulty (`maxCompletable` 1 Normale / 3 Facile), keep tableau full
+    - [ ] Write property tests: completable count within [1, max(target, U − P)] after every deal
+    - [ ] Implement draw selection from hidden pile tiles
+- [ ] Task: UI — pointer drag & drop + tap-tap swap + keyboard, drop-target highlight, no tray, larger tiles
+- [ ] Task: UI — minimal borders (2px gap, ≤3px radius, no frame)
+- [ ] Task: Difficulty selector on the start screen (persisted)
+- [ ] Task: Update e2e tests to the new mechanic
+- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+
 ## Phase 6: Victory, Album & Persistence UX
 - [ ] Task: Victory screen (FR-7)
     - [ ] Write tests: shows stats, records updated, "Gioca ancora" resets game
