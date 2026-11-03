@@ -1,0 +1,1 @@
+e2e/a11y-perf.spec.ts: axe-core (wcag2a, wcag2aa) on start screen and table -> 0 serious/critical violations; Tab reaches the first tile; performance.mark('fotoquad:interactive') after showStart, cached PWA reload measured at 20-24ms (< 200ms budget). tech-stack.md updated with @axe-core/playwright.
