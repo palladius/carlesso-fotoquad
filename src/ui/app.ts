@@ -51,6 +51,11 @@ export class App {
     d.root.addEventListener('keydown', () => d.audio.unlock(), { capture: true });
   }
 
+  /** Current game state (read-only, for tests and debugging). */
+  get currentState(): GameState | null {
+    return this.state;
+  }
+
   showStart(): void {
     this.table?.destroy();
     this.table = null;
