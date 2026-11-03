@@ -112,9 +112,9 @@ Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.m
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 8: Convergence (Pass 1)
-- [ ] Task: [CONVERGE][CRITICAL] Remove or justify type assertions (`as X`) in `src/` per code_styleguides/typescript.md §1 "Type Assertions" (contradicts) — ~50 unjustified casts, mostly `table.ts` (14) and `dealer.ts` (10)
-    - [ ] Replace casts with typed helpers / narrowing; keep only unavoidable ones with a `// cast:` justification
-    - [ ] Verify tsc, lint, unit + e2e still pass
+- [x] Task: [CONVERGE][CRITICAL] Remove or justify type assertions (`as X`) in `src/` per code_styleguides/typescript.md §1 "Type Assertions" (contradicts) — ~50 unjustified casts, mostly `table.ts` (14) and `dealer.ts` (10) `30bdf1c`
+    - [x] Replace casts with typed helpers / narrowing; keep only unavoidable ones with a `// cast:` justification
+    - [x] Verify tsc, lint, unit + e2e still pass
 - [x] Task: [CONVERGE][HIGH] Pixel-level slicer verification per spec.md AC-1 / FR-1 (partial) — only quadrant geometry is unit-tested `cdde481`
     - [x] Write e2e test: serve a synthetic 4-colour portrait image via a routed manifest, assert each tile's pixels match its quadrant colour
     - [x] Fix slicer if needed and verify
