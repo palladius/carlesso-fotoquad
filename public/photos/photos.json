@@ -180,5 +180,40 @@
     "title": "Gamberone surfista",
     "year": 2026,
     "tags": ["gamberone", "mare"]
+  },
+  {
+    "id": "ghostbusters_marshmallow",
+    "src": "demo/ghostbusters_marshmallow.jpg",
+    "title": "Acchiappafantasmi contro il marshmallow",
+    "year": 2026,
+    "tags": ["ale", "sebi"]
+  },
+  {
+    "id": "seby_pupurabbu",
+    "src": "demo/seby_pupurabbu.jpg",
+    "title": "Seby e il Pupurabbu",
+    "year": 2026,
+    "tags": ["sebi", "pupurabbu"]
+  },
+  {
+    "id": "ale_einstein",
+    "src": "demo/ale_einstein.jpg",
+    "title": "Ale il piccolo Einstein",
+    "year": 2026,
+    "tags": ["ale", "scuola"]
+  },
+  {
+    "id": "colmar_petite_venise",
+    "src": "demo/colmar_petite_venise.jpg",
+    "title": "Colmar, la Piccola Venezia",
+    "year": 2026,
+    "tags": ["ale", "sebi", "viaggi"]
+  },
+  {
+    "id": "cala_goloritze",
+    "src": "demo/cala_goloritze.jpg",
+    "title": "In canotto a Cala Goloritzé",
+    "year": 2026,
+    "tags": ["ale", "sebi", "mare", "viaggi"]
   }
 ]
