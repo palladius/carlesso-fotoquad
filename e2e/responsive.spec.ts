@@ -32,3 +32,23 @@ for (const vp of VIEWPORTS) {
     await page.screenshot({ path: `test-results/layout-${vp.width}x${vp.height}.png` });
   });
 }
+
+test('Facile on a wide screen: no empty decks, tray beside the grid, everything fits', async ({
+  page,
+}, info) => {
+  test.skip(info.project.name !== 'desktop', 'viewport set explicitly; run once');
+  await page.setViewportSize({ width: 1024, height: 620 });
+  await page.goto('/');
+  await page.evaluate(() => localStorage.clear());
+  await page.reload();
+  await page.locator('[data-level="facile"]').click();
+  await expect(page.locator('.grid .tile').first()).toBeVisible();
+  await expect(page.locator('.piles')).toBeHidden();
+  const m = await page.evaluate(() => {
+    const r = (s: string) => document.querySelector(s)!.getBoundingClientRect();
+    return { grid: r('.grid'), tray: r('.tray'), hud: r('.hud'), sh: document.documentElement.scrollHeight };
+  });
+  expect(m.tray.left).toBeGreaterThan(m.grid.right);
+  expect(m.hud.bottom).toBeLessThanOrEqual(621);
+  expect(m.sh).toBeLessThanOrEqual(621);
+});

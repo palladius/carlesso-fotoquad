@@ -468,6 +468,33 @@ button:focus-visible {
   grid-template-rows: auto auto auto 1fr;
 }
 
+.table.no-piles .piles {
+  display: none;
+}
+
+.table.no-piles {
+  grid-template-areas: 'grid' 'hud';
+  grid-template-rows: auto 1fr;
+}
+
+.table.mode-tray.no-piles {
+  grid-template-areas: 'grid' 'tray' 'hud';
+  grid-template-rows: auto auto 1fr;
+}
+
+/* Facile on a wide screen: tray beside the grid, vertically centred */
+.table.mode-tray.landscape {
+  grid-template-areas: 'piles piles' 'grid tray' 'hud hud';
+  grid-template-rows: auto auto 1fr;
+  column-gap: 32px;
+  align-items: center;
+}
+
+.table.mode-tray.landscape.no-piles {
+  grid-template-areas: 'grid tray' 'hud hud';
+  grid-template-rows: auto 1fr;
+}
+
 .table.mode-tray .tile {
   touch-action: manipulation;
   cursor: pointer;

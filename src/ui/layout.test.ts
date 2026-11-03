@@ -20,6 +20,20 @@ describe('computeTileSize', () => {
     expect(computeTileSize(50, 50).w).toBe(28);
   });
 
+  it('grows when there are no piles to show (no overflow)', () => {
+    expect(computeTileSize(1440, 900, 5, 5, { piles: false }).w).toBeGreaterThan(
+      computeTileSize(1440, 900, 5, 5).w,
+    );
+  });
+
+  it('a tray beside the grid (landscape) gives bigger tiles than a tray below it', () => {
+    const below = computeTileSize(1440, 900, 5, 5 + 2.3, { piles: false });
+    const beside = computeTileSize(1440, 900, 5, 5, { piles: false, extraCols: 2.4 });
+    expect(beside.w).toBeGreaterThan(below.w);
+    // still fits horizontally: grid + tray + gaps
+    expect((5 + 2.4) * beside.w + 60).toBeLessThanOrEqual(1440);
+  });
+
   it('shrinks when extra rows (the tray) must fit', () => {
     expect(computeTileSize(390, 844, 5, 8.3).w).toBeLessThan(computeTileSize(390, 844, 5, 6).w);
   });

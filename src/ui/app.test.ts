@@ -378,6 +378,28 @@ describe('grid mode table', () => {
 });
 
 describe('tray mode (Facile)', () => {
+  it('hides the empty decks when nothing overflows, and puts the tray beside the grid in landscape', async () => {
+    window.innerWidth = 1440;
+    window.innerHeight = 900;
+    const app = makeApp(7, THREE);
+    await start(app, 'facile');
+    expect($('.table').classList.contains('no-piles')).toBe(true);
+    expect($('.table').classList.contains('landscape')).toBe(true);
+    window.innerWidth = 390;
+    window.innerHeight = 844;
+    window.dispatchEvent(new Event('resize'));
+    expect($('.table').classList.contains('landscape')).toBe(false);
+    window.innerWidth = 1024;
+    window.innerHeight = 768;
+  });
+
+  it('keeps the decks when the game overflows', async () => {
+    const app = makeApp(7);
+    await start(app, 'medio'); // 12 photos = 48 tiles > 30 slots
+    expect($('.table').classList.contains('no-piles')).toBe(false);
+    expect($('.table').classList.contains('landscape')).toBe(false); // landscape layout is a tray-mode thing
+  });
+
   it('tap sends a tile to the tray and back; full game ends in victory', async () => {
     const app = makeApp(7, THREE);
     await start(app, 'facile');

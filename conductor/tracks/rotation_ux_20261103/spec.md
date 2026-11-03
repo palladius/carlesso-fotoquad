@@ -61,6 +61,11 @@ ghost-dismiss, ghost-click-through and victory-screen hazards. Final rules (cons
 - **Accessibility:** popup is `aria-hidden`; a persistent polite live region announces "Foto completata: …";
   keyboard players get focus restored on the board after the discard; reduced motion keeps the same HOLD.
 
+### FR-8 Smarter Facile layout *(added 2026-11-03 20:28, Riccardo's feedback)*
+- Games that don't overflow the board (e.g. Facile: 24 tiles on 25 slots) hide the empty decks.
+- On a wide screen the Facile tray sits **beside** the grid (vertically centred) instead of below it → bigger tiles,
+  HUD always visible.
+
 ## 3. Non-Functional
 - Same quality gates as the MVP: TDD, ≥ 80% coverage, e2e on the production build, axe 0 serious violations.
 

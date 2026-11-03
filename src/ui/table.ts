@@ -72,6 +72,8 @@ export class TableView {
   private readonly traySlots: Record<Quadrant, HTMLElement>;
   private readonly pileCountEls: HTMLElement[] = [];
   private readonly trayMode: boolean;
+  /** Games that don't overflow the board never use the decks: hide them (more room for the photos). */
+  private readonly hasPiles: boolean;
   private readonly solvedEl: HTMLElement;
   private readonly movesEl: HTMLElement;
   private readonly albumBtn: HTMLButtonElement;
@@ -97,6 +99,7 @@ export class TableView {
     private readonly opts: TableOptions,
   ) {
     this.trayMode = state.options.mode === 'tray';
+    this.hasPiles = state.piles.some((p) => p.length > 0);
     const piles = h('div', { class: 'piles', role: 'group', 'aria-label': 'Mazzi di pesca' });
     for (let i = 0; i < state.options.piles; i++) {
       const count = h('span', { class: 'pile-count' });
@@ -167,7 +170,7 @@ export class TableView {
     this.liveEl = h('div', { class: 'sr-only', 'aria-live': 'polite' });
     this.root = h(
       'main',
-      { class: `table mode-${state.options.mode}` },
+      { class: `table mode-${state.options.mode}${this.hasPiles ? '' : ' no-piles'}` },
       piles,
       grid,
       this.trayEl,
@@ -189,14 +192,21 @@ export class TableView {
   }
 
   layout(): void {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    // Facile on a wide screen: the tray goes beside the grid instead of below it.
+    const landscape = this.trayMode && width > height * 1.1;
+    const gridRows = this.state.grid.length / this.state.options.columns;
     const { w, h: th } = computeTileSize(
-      window.innerWidth,
-      window.innerHeight,
+      width,
+      height,
       this.state.options.columns,
-      this.state.grid.length / this.state.options.columns + (this.trayMode ? 2.3 : 0),
+      gridRows + (this.trayMode && !landscape ? 2.3 : 0),
+      { piles: this.hasPiles, extraCols: landscape ? 2.4 : 0 },
     );
     this.root.style.setProperty('--tile-w', `${w}px`);
     this.root.style.setProperty('--tile-h', `${th}px`);
+    this.root.classList.toggle('landscape', landscape);
   }
 
   // ---------- input ----------
