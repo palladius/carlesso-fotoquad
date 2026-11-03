@@ -26,6 +26,7 @@ async function boot(): Promise<void> {
     seed: () => crypto.getRandomValues(new Uint32Array(1))[0] ?? Date.now(),
   });
   app.showStart();
+  performance.mark('fotoquad:interactive'); // NFR: measured by e2e/a11y-perf.spec.ts
 }
 
 void boot();

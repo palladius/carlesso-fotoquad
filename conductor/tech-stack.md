@@ -30,6 +30,7 @@
 
 ## Testing
 - **Vitest** (+ jsdom where needed) for unit tests of the engine and adapters; coverage via `@vitest/coverage-v8`.
+- **@axe-core/playwright** for automated accessibility audits (WCAG 2 A/AA) in e2e *(added 2026-11-03, convergence pass 1)*.
 - **Playwright** for end-to-end tests (mobile portrait + desktop viewports) and screenshot verification.
   On `pupurabbux`, use system Chrome with GPU flags (see user setup notes).
 
