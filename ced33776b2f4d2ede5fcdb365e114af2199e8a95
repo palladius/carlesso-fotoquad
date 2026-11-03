@@ -1,0 +1,1 @@
+UI integration tests: src/ui/app.test.ts (17 tests driving real App + TableView in jsdom with fake slicer/audio, pointer events, fake timers, animation stubs), src/ui/layout.test.ts. Coverage 95.96% stmts / 89.5% branches. Fixes CI coverage gate.
