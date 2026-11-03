@@ -110,3 +110,26 @@ Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.m
 - [ ] Task: Accessibility pass (contrast, focus order, labels) and performance check (< 200ms interactive cached)
 - [x] Task: README update (how to add private family photos, dev commands, live URL) and deploy to GitHub Pages `cc35f7b`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+
+## Phase 8: Convergence (Pass 1)
+- [ ] Task: [CONVERGE][CRITICAL] Remove or justify type assertions (`as X`) in `src/` per code_styleguides/typescript.md §1 "Type Assertions" (contradicts) — ~50 unjustified casts, mostly `table.ts` (14) and `dealer.ts` (10)
+    - [ ] Replace casts with typed helpers / narrowing; keep only unavoidable ones with a `// cast:` justification
+    - [ ] Verify tsc, lint, unit + e2e still pass
+- [ ] Task: [CONVERGE][HIGH] Pixel-level slicer verification per spec.md AC-1 / FR-1 (partial) — only quadrant geometry is unit-tested
+    - [ ] Write e2e test: serve a synthetic 4-colour portrait image via a routed manifest, assert each tile's pixels match its quadrant colour
+    - [ ] Fix slicer if needed and verify
+- [ ] Task: [CONVERGE][HIGH] Accessibility pass + performance check per plan.md Phase 7 / spec.md NFR (missing)
+    - [ ] Write e2e: axe-core scan of start screen and table (no serious/critical violations), HUD contrast WCAG AA
+    - [ ] Write e2e: cached (PWA) reload reaches an interactive start screen in < 200ms (navigation timing)
+    - [ ] Fix any violations found
+- [ ] Task: [CONVERGE][MEDIUM] Keyboard parity for moving a tile into an empty slot per spec.md FR-4.1 / AC-5 (partial) — empty slots are not focusable
+    - [ ] Write test: keyboard select tile + activate empty slot moves it
+    - [ ] Make empty slots focusable/activatable
+- [ ] Task: [CONVERGE][MEDIUM] Tap/drag feedback sound within 100ms per product-guidelines.md UX #2 (partial) — selecting a tile or starting a drag is silent
+    - [ ] Write test: selection and drag start play the `tap` sound
+    - [ ] Implement
+- [ ] Task: [CONVERGE][LOW] Accessible HUD labels per spec.md FR-3 ("Foto risolte: X / N", moves) (partial) — HUD shows emoji-only counters
+    - [ ] Add aria-label/title "Foto risolte" / "Mosse" + unit test
+- [ ] Task: [CONVERGE][LOW] Review unrequested leftovers (unrequested): dead `src/app.ts` APP_NAME (+ its smoke test) and stale hint-click flow in `scripts/screenshot.mjs`
+    - [ ] Remove dead code; fix or simplify the screenshot helper
+- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
