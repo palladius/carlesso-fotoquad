@@ -3,3 +3,7 @@ PWA via vite-plugin-pwa (generateSW, clientsClaim/skipWaiting, precache 38 entri
 Phase 4 checkpoint verification report
 
 Automated: vitest 105/105 (coverage 95.96%), Playwright 22 passed / 4 skipped by design (full games in grid+tray modes, drag&drop, resume, difficulty, offline PWA, responsive). Manual verification: Riccardo and kids played on localhost on 2026-11-03 ('il gioco e MOLTO BELLO', 'il gioco e fichissimo!'); their feedback produced Phase 5b.
+
+Phase 5 checkpoint verification report
+
+Automated: vitest 105/105 (coverage 95.96%), Playwright 22 passed / 4 skipped by design (full games in grid+tray modes, drag&drop, resume, difficulty, offline PWA, responsive). Manual verification: Riccardo and kids played on localhost on 2026-11-03 ('il gioco e MOLTO BELLO', 'il gioco e fichissimo!'); their feedback produced Phase 5b.
