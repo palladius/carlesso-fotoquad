@@ -1,0 +1,3 @@
+Task: Storage (FR-8)
+
+src/platform/storage.ts: never-throwing versioned storage (game.v1, profile.v1), corrupt data discarded.
