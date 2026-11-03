@@ -1,4 +1,4 @@
-import { QUADRANTS, type Photo, type Quadrant } from '../engine/types';
+import type { Photo, Quadrant } from '../engine/types';
 
 export interface Rect {
   x: number;
@@ -73,12 +73,14 @@ export async function slicePhoto(photo: Photo, tileHeight = 480): Promise<Sliced
   const th = Math.min(tileHeight, crop.h / 2);
   const tw = th * ASPECT;
   const rects = quadrantRects(crop);
-  const [full, ...parts] = await Promise.all([
+  const [full, tl, tr, bl, br] = await Promise.all([
     draw(img, crop, tw * 2, th * 2),
-    ...QUADRANTS.map((q) => draw(img, rects[q], tw, th)),
+    draw(img, rects.TL, tw, th),
+    draw(img, rects.TR, tw, th),
+    draw(img, rects.BL, tw, th),
+    draw(img, rects.BR, tw, th),
   ]);
-  const quadrants = Object.fromEntries(QUADRANTS.map((q, i) => [q, parts[i]])) as Record<Quadrant, string>;
-  return { photo, full: full as string, quadrants };
+  return { photo, full, quadrants: { TL: tl, TR: tr, BL: bl, BR: br } };
 }
 
 /** Slices all photos, skipping (with a warning) the ones that fail to load. */

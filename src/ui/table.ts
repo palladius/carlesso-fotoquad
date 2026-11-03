@@ -1,6 +1,7 @@
 import { parseTile } from '../engine/tiles';
 import { QUADRANTS, type GameEvent, type GameState, type Quadrant, type TileId } from '../engine/types';
 import type { SlicedPhoto } from '../platform/slicer';
+import { at } from '../engine/util';
 import { h, reducedMotion, sleep } from './dom';
 import { confetti, flipFrom } from './fx';
 import { computeTileSize } from './layout';
@@ -48,7 +49,8 @@ export class TableView {
   private readonly slotEls: HTMLElement[] = [];
   private readonly tiles = new Map<TileId, HTMLButtonElement>();
   private readonly trayEl: HTMLElement | null = null;
-  private readonly traySlots = {} as Record<Quadrant, HTMLElement>;
+  private readonly traySlots: Record<Quadrant, HTMLElement>;
+  private readonly pileCountEls: HTMLElement[] = [];
   private readonly trayMode: boolean;
   private readonly solvedEl: HTMLElement;
   private readonly movesEl: HTMLElement;
@@ -69,7 +71,9 @@ export class TableView {
     this.trayMode = state.options.mode === 'tray';
     const piles = h('div', { class: 'piles', 'aria-label': 'Mazzi di pesca' });
     for (let i = 0; i < state.options.piles; i++) {
-      const pile = h('div', { class: 'pile' }, h('span', { class: 'pile-count' }));
+      const count = h('span', { class: 'pile-count' });
+      this.pileCountEls.push(count);
+      const pile = h('div', { class: 'pile' }, count);
       this.pileEls.push(pile);
       piles.append(pile);
     }
@@ -88,13 +92,14 @@ export class TableView {
       this.slotEls.push(slot);
       grid.append(slot);
     });
+    const traySlot = (q: Quadrant) => h('div', { class: `tray-slot tray-${q}`, 'data-q': q });
+    this.traySlots = { TL: traySlot('TL'), TR: traySlot('TR'), BL: traySlot('BL'), BR: traySlot('BR') };
     if (this.trayMode) {
-      this.trayEl = h('div', { class: 'tray', role: 'group', 'aria-label': 'Vassoio di ricomposizione' });
-      for (const q of QUADRANTS) {
-        const slot = h('div', { class: `tray-slot tray-${q}`, 'data-q': q });
-        this.traySlots[q] = slot;
-        this.trayEl.append(slot);
-      }
+      this.trayEl = h(
+        'div',
+        { class: 'tray', role: 'group', 'aria-label': 'Vassoio di ricomposizione' },
+        ...QUADRANTS.map((q) => this.traySlots[q]),
+      );
     }
     this.solvedEl = h('span', { class: 'hud-solved' });
     this.movesEl = h('span', { class: 'hud-moves' });
@@ -247,7 +252,7 @@ export class TableView {
 
   private slotAt(x: number, y: number): number | null {
     for (const el of document.elementsFromPoint(x, y)) {
-      const slot = (el as HTMLElement).closest?.('.slot') as HTMLElement | null;
+      const slot = el.closest<HTMLElement>('.slot');
       if (slot && this.root.contains(slot)) return Number(slot.dataset.slot);
     }
     return null;
@@ -289,6 +294,14 @@ export class TableView {
 
   // ---------- rendering ----------
 
+  private slot(i: number): HTMLElement {
+    return at(this.slotEls, i);
+  }
+
+  private tileIn(parent: Element | undefined): HTMLElement | null {
+    return parent?.querySelector<HTMLElement>('.tile') ?? null;
+  }
+
   /** Empty slots are keyboard targets (move a tile into a hole); filled slots delegate to their tile. */
   private setEmpty(i: number, empty: boolean): void {
     const slot = this.slotEls[i];
@@ -310,7 +323,7 @@ export class TableView {
     this.state = state;
     const keep = new Set<TileId>();
     state.grid.forEach((id, i) => {
-      const slot = this.slotEls[i] as HTMLElement;
+      const slot = this.slot(i);
       this.setEmpty(i, !id);
       if (id) {
         keep.add(id);
@@ -346,10 +359,10 @@ export class TableView {
     this.movesEl.setAttribute('aria-label', `Mosse: ${state.moves}`);
     this.movesEl.title = 'Mosse';
     pileCounts.forEach((n, i) => {
-      const pile = this.pileEls[i] as HTMLElement;
+      const pile = at(this.pileEls, i);
       pile.classList.toggle('empty', n === 0);
       pile.style.setProperty('--depth', String(Math.min(n, 6)));
-      (pile.firstElementChild as HTMLElement).textContent = n ? String(n) : '';
+      at(this.pileCountEls, i).textContent = n ? String(n) : '';
     });
   }
 
@@ -366,8 +379,8 @@ export class TableView {
           this.dropRect = null;
           const displaced = e.displaced ? this.tileEl(e.displaced) : null;
           const firstD = displaced?.getBoundingClientRect();
-          (this.slotEls[e.to] as HTMLElement).append(moved);
-          if (displaced) (this.slotEls[e.from] as HTMLElement).append(displaced);
+          this.slot(e.to).append(moved);
+          if (displaced) this.slot(e.from).append(displaced);
           this.setEmpty(e.from, !displaced);
           this.setEmpty(e.to, false);
           flipFrom(moved, first, 220);
@@ -388,7 +401,7 @@ export class TableView {
           sfx('land');
           const el = this.tileEl(e.tileId);
           const first = el.getBoundingClientRect();
-          (this.slotEls[e.to] as HTMLElement).append(el);
+          this.slot(e.to).append(el);
           this.setEmpty(e.to, false);
           flipFrom(el, first);
           break;
@@ -401,8 +414,8 @@ export class TableView {
           break;
         case 'dealt': {
           const el = this.tileEl(e.tileId);
-          const first = (this.pileEls[e.pile] as HTMLElement).getBoundingClientRect();
-          (this.slotEls[e.to] as HTMLElement).append(el);
+          const first = at(this.pileEls, e.pile).getBoundingClientRect();
+          this.slot(e.to).append(el);
           this.setEmpty(e.to, false);
           prevPiles[e.pile] = (prevPiles[e.pile] ?? 1) - 1;
           this.updateHud(next, prevPiles);
@@ -426,27 +439,23 @@ export class TableView {
     const sliced = this.opts.photosById.get(photoId);
     const motion = !reducedMotion();
     const blockTiles = slots.length
-      ? slots.map((i) => this.slotEls[i]?.firstElementChild as HTMLElement | null)
-      : QUADRANTS.map((q) => this.traySlots[q]?.firstElementChild as HTMLElement | null);
+      ? slots.map((i) => this.tileIn(this.slotEls[i]))
+      : QUADRANTS.map((q) => this.tileIn(this.traySlots[q]));
     for (const t of blockTiles) t?.classList.add('solved');
     this.trayEl?.classList.toggle('merged', !slots.length);
     sfx('match');
     const first = blockTiles[0]?.getBoundingClientRect();
-    const popup = h(
-      'div',
-      { class: 'match-popup', role: 'status' },
-      h(
-        'figure',
-        {},
-        sliced ? h('img', { src: sliced.full, alt: sliced.photo.title }) : null,
-        h('figcaption', {
-          text: sliced ? `${sliced.photo.title}${sliced.photo.year ? ` · ${sliced.photo.year}` : ''}` : '',
-        }),
-      ),
+    const fig = h(
+      'figure',
+      {},
+      sliced ? h('img', { src: sliced.full, alt: sliced.photo.title }) : null,
+      h('figcaption', {
+        text: sliced ? `${sliced.photo.title}${sliced.photo.year ? ` · ${sliced.photo.year}` : ''}` : '',
+      }),
     );
+    const popup = h('div', { class: 'match-popup', role: 'status' }, fig);
     document.body.append(popup);
     confetti(window.innerWidth / 2, window.innerHeight / 2);
-    const fig = popup.firstElementChild as HTMLElement;
     if (motion && first) {
       const r = fig.getBoundingClientRect();
       await fig

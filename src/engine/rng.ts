@@ -1,3 +1,5 @@
+import { at } from './util';
+
 /**
  * Seeded pseudo-random number generator (mulberry32).
  * The internal state is exposed so games can be serialised and resumed deterministically.
@@ -34,7 +36,7 @@ export function shuffle<T>(items: readonly T[], rng: Rng): T[] {
   const out = [...items];
   for (let i = out.length - 1; i > 0; i--) {
     const j = rng.int(i + 1);
-    [out[i], out[j]] = [out[j] as T, out[i] as T];
+    [out[i], out[j]] = [at(out, j), at(out, i)];
   }
   return out;
 }

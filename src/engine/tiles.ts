@@ -4,9 +4,15 @@ export function tileId(photoId: string, quadrant: Quadrant): TileId {
   return `${photoId}#${quadrant}`;
 }
 
+export function isQuadrant(v: unknown): v is Quadrant {
+  return QUADRANTS.some((q) => q === v);
+}
+
 export function parseTile(id: TileId): Tile {
   const cut = id.lastIndexOf('#');
-  return { id, photoId: id.slice(0, cut), quadrant: id.slice(cut + 1) as Quadrant };
+  const quadrant = id.slice(cut + 1);
+  if (cut < 0 || !isQuadrant(quadrant)) throw new Error(`invalid tile id: ${id}`);
+  return { id, photoId: id.slice(0, cut), quadrant };
 }
 
 export function allTileIds(photoIds: readonly string[]): TileId[] {

@@ -1,3 +1,4 @@
+import { at } from '../engine/util';
 import { h, reducedMotion } from './dom';
 
 /** FLIP: moves `el` into `parent` (or keeps it) and animates from its previous on-screen rect. */
@@ -31,7 +32,7 @@ export function confetti(x: number, y: number, count = 70): void {
     const p = h('i');
     p.style.left = `${x}px`;
     p.style.top = `${y}px`;
-    p.style.background = COLORS[i % COLORS.length] as string;
+    p.style.background = at(COLORS, i % COLORS.length);
     layer.append(p);
     const angle = Math.random() * Math.PI * 2;
     const dist = 120 + Math.random() * 260;

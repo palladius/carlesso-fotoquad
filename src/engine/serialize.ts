@@ -20,6 +20,7 @@ export function deserialize(raw: string): GameState | null {
     return null;
   }
   if (!data || typeof data !== 'object') return null;
+  // cast: untrusted JSON; the shape is validated field-by-field below before returning it.
   const s = data as Record<string, unknown>;
   if (s.version !== SCHEMA_VERSION) return null;
   const opts = s.options as Record<string, unknown> | undefined;
@@ -50,5 +51,6 @@ export function deserialize(raw: string): GameState | null {
     isNum(s.hintsUsed) &&
     isNum(s.startedAt) &&
     isSlotOrNum(s.finishedAt);
+  // cast: every GameState field was validated above.
   return ok ? (s as unknown as GameState) : null;
 }

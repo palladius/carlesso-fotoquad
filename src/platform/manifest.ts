@@ -10,6 +10,7 @@ export function parseManifest(data: unknown, manifestUrl: string): Photo[] {
   }
   const out: Photo[] = [];
   for (const entry of data) {
+    // cast: untrusted JSON entry; fields are type-checked one by one below.
     const e = entry as Record<string, unknown> | null;
     if (!e || !isStr(e.id) || !isStr(e.src)) {
       console.warn('[fotoquad] skipping invalid manifest entry', entry);

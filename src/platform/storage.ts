@@ -54,15 +54,14 @@ export function createStorage(backing: Storage): GameStorage {
   const profile = (): Profile => {
     const fresh: Profile = { unlocked: [], records: {}, muted: false, difficulty: 'medio' };
     try {
+      // cast: untrusted JSON; every field is re-validated below before use.
       const p = JSON.parse(read(PROFILE_KEY) ?? 'null') as Partial<Profile> | null;
       if (!p || typeof p !== 'object') return fresh;
       return {
         unlocked: Array.isArray(p.unlocked) ? p.unlocked.filter((x) => typeof x === 'string') : [],
         records: p.records && typeof p.records === 'object' ? p.records : {},
         muted: p.muted === true,
-        difficulty: DIFFICULTIES.includes(p.difficulty as Difficulty)
-          ? (p.difficulty as Difficulty)
-          : 'medio',
+        difficulty: DIFFICULTIES.find((d) => d === p.difficulty) ?? 'medio',
       };
     } catch {
       return fresh;
@@ -76,6 +75,7 @@ export function createStorage(backing: Storage): GameStorage {
     },
     loadGame() {
       try {
+        // cast: untrusted JSON; both fields are type-checked on the next line.
         const raw = JSON.parse(read(GAME_KEY) ?? 'null') as { packId?: unknown; state?: unknown } | null;
         if (!raw || typeof raw.packId !== 'string' || typeof raw.state !== 'string') return null;
         const state = deserialize(raw.state);

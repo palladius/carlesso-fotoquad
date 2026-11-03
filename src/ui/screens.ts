@@ -197,10 +197,10 @@ export function albumScreen(photos: Photo[], onClose: () => void, start = 0): HT
           'figure',
           {
             class: 'album-figure',
-            onpointerdown: (e: Event) => (startX = (e as PointerEvent).clientX),
+            onpointerdown: (e: Event) => (startX = e instanceof MouseEvent ? e.clientX : null),
             onpointerup: (e: Event) => {
-              if (startX === null) return;
-              const dx = (e as PointerEvent).clientX - startX;
+              if (startX === null || !(e instanceof MouseEvent)) return;
+              const dx = e.clientX - startX;
               startX = null;
               if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1);
             },

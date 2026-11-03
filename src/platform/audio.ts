@@ -25,13 +25,18 @@ const SOUNDS: Record<Sound, Note[]> = {
   // C major arpeggio, harp-like
   match: [523.25, 659.25, 783.99, 1046.5].map((freq, i) => ({ freq, at: i * 0.08, dur: 0.5, vol: 0.18 })),
   // 8-bit victory fanfare
-  victory: [523.25, 523.25, 523.25, 659.25, 783.99, 659.25, 783.99, 1046.5].map((freq, i) => ({
-    freq,
-    at: [0, 0.12, 0.24, 0.36, 0.6, 0.78, 0.9, 1.1][i] as number,
-    dur: i === 7 ? 0.8 : 0.16,
-    type: 'square' as OscillatorType,
-    vol: 0.08,
-  })),
+  victory: (
+    [
+      [523.25, 0],
+      [523.25, 0.12],
+      [523.25, 0.24],
+      [659.25, 0.36],
+      [783.99, 0.6],
+      [659.25, 0.78],
+      [783.99, 0.9],
+      [1046.5, 1.1],
+    ] as const
+  ).map(([freq, at], i): Note => ({ freq, at, dur: i === 7 ? 0.8 : 0.16, type: 'square', vol: 0.08 })),
 };
 
 export function createAudio(factory: () => AudioContext = () => new AudioContext()): GameAudio {

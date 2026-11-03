@@ -1,6 +1,7 @@
 import type { Rng } from './rng';
 import { shuffle } from './rng';
 import { findBlocks, parseTile, tileId, visibleTiles } from './tiles';
+import { at } from './util';
 import { QUADRANTS, UNLIMITED, type GameEvent, type GameState, type TileId } from './types';
 
 /** Unsolved photos whose 4 quadrants are all on the tableau. */
@@ -114,22 +115,24 @@ export function dealInto(state: GameState, slots: readonly number[], rng: Rng): 
     }),
   );
   misplaced.forEach((m, i) => {
-    const f = freeAtTop[i] as Pick;
-    const a = state.piles[m.pile] as TileId[];
-    const b = state.piles[f.pile] as TileId[];
-    [a[m.index], b[f.index]] = [b[f.index] as TileId, a[m.index] as TileId];
+    const f = at(freeAtTop, i);
+    const a = at(state.piles, m.pile);
+    const b = at(state.piles, f.pile);
+    [a[m.index], b[f.index]] = [at(b, f.index), at(a, m.index)];
   });
 
-  const drawn = picks.map((p) => ({
-    tileId: (state.piles[p.pile] as TileId[]).pop() as TileId,
-    pile: p.pile,
-  }));
+  const drawn = picks.map((p) => {
+    const pile = at(state.piles, p.pile);
+    const tileId = at(pile, pile.length - 1);
+    pile.pop();
+    return { tileId, pile: p.pile };
+  });
   const targets = slots.slice(0, k);
   let order = drawn;
   for (let attempt = 0; attempt < 60; attempt++) {
     order = shuffle(drawn, rng);
-    order.forEach((d, i) => (state.grid[targets[i] as number] = d.tileId));
+    order.forEach((d, i) => (state.grid[at(targets, i)] = d.tileId));
     if (!hasNaturalAdjacency(state.grid, state.options.columns)) break;
   }
-  return order.map((d, i) => ({ type: 'dealt', tileId: d.tileId, pile: d.pile, to: targets[i] as number }));
+  return order.map((d, i) => ({ type: 'dealt', tileId: d.tileId, pile: d.pile, to: at(targets, i) }));
 }

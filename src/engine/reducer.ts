@@ -1,5 +1,6 @@
 import { completablePhotos, dealInto } from './dealer';
 import { createRng } from './rng';
+import { at } from './util';
 import { findBlocks, parseTile, tileId } from './tiles';
 import {
   QUADRANTS,
@@ -46,8 +47,7 @@ export function findHint(state: GameState): { photoId: string; tileIds: string[]
   const options = completablePhotos(state);
   if (!options.length) return null;
   const inTray = (p: string) => QUADRANTS.filter((q) => state.tray[q] === tileId(p, q)).length;
-  let best = options[0] as string;
-  for (const p of options) if (inTray(p) > inTray(best)) best = p;
+  const best = options.reduce((a, b) => (inTray(b) > inTray(a) ? b : a));
   return { photoId: best, tileIds: QUADRANTS.map((q) => tileId(best, q)) };
 }
 
@@ -85,17 +85,17 @@ function giveBack(state: GameState, quadrant: Quadrant, events: GameEvent[]): vo
 }
 
 function resolveTrayMatch(state: GameState, events: GameEvent[], now: number): void {
-  const ids = QUADRANTS.map((q) => state.tray[q]);
-  if (ids.some((t) => t === null)) return;
-  const photos = new Set(ids.map((t) => parseTile(t as string).photoId));
+  const ids = QUADRANTS.map((q) => state.tray[q]).filter((t): t is string => t !== null);
+  if (ids.length !== QUADRANTS.length) return;
+  const photos = new Set(ids.map((t) => parseTile(t).photoId));
   if (photos.size !== 1) return;
-  const [photoId] = [...photos] as [string];
+  const photoId = at([...photos], 0);
   for (const q of QUADRANTS) {
     state.tray[q] = null;
     state.trayOrigin[q] = null;
   }
   state.solved.push(photoId);
-  events.push({ type: 'matched', photoId, tileIds: ids as string[], slots: [] });
+  events.push({ type: 'matched', photoId, tileIds: ids, slots: [] });
   refillAndCheck(
     state,
     events,
@@ -139,7 +139,7 @@ function resolveMatches(state: GameState, events: GameEvent[], now: number): voi
   if (!blocks.length) return;
   const vacated: number[] = [];
   for (const b of blocks) {
-    const tileIds = b.slots.map((i) => state.grid[i] as string);
+    const tileIds = b.slots.map((i) => at(state.grid, i)).filter((t): t is string => t !== null);
     for (const i of b.slots) state.grid[i] = null;
     vacated.push(...b.slots);
     state.solved.push(b.photoId);
