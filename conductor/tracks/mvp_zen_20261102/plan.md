@@ -101,7 +101,7 @@ Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.m
 - [x] Task: Resume flow (FR-8) — reload mid-game restores exact state `0875fae`
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `cc35f7b`
 
-## Phase 7: PWA, E2E & Release
+## Phase 7: PWA, E2E & Release [checkpoint: 1baef87]
 - [x] Task: PWA (FR-10) `cc35f7b`
     - [x] Configure `vite-plugin-pwa`: manifest (portrait, felt-green theme), precache app shell + photos
     - [x] Playwright test: after first load, go offline, reload, full game still playable
@@ -109,7 +109,7 @@ Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.m
 - [x] Task: Responsive screenshots at 360×640, 390×844, 1440×900; no overflow assertions `cc35f7b`
 - [x] Task: Accessibility pass (contrast, focus order, labels) and performance check (< 200ms interactive cached) `433e156`
 - [x] Task: README update (how to add private family photos, dev commands, live URL) and deploy to GitHub Pages `cc35f7b`
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `1baef87`
 
 ## Phase 8: Convergence (Pass 1)
 - [x] Task: [CONVERGE][CRITICAL] Remove or justify type assertions (`as X`) in `src/` per code_styleguides/typescript.md §1 "Type Assertions" (contradicts) — ~50 unjustified casts, mostly `table.ts` (14) and `dealer.ts` (10) `30bdf1c`
