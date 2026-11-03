@@ -1,0 +1,1 @@
+Phase 5b (user feedback 2026-11-03): engine SWAP + findBlocks + difficulty-aware dealer (maxCompletable), tray mode kept as Facile, schema v2; TableView pointer drag&drop + tap-tap + keyboard, minimal borders (2px gap, 3px radius); difficulty picker persisted; e2e updated (15 pass incl. drag, full games in grid and tray modes). Unit 82 pass.
