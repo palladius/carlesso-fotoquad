@@ -78,7 +78,7 @@ Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.m
 - [x] Task: Mute toggle & audio hooks on engine events `0875fae`
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `cc35f7b`
 
-## Phase 5b: Gameplay Revision — in-grid drag & drop (user feedback 2026-11-03)
+## Phase 5b: Gameplay Revision — in-grid drag & drop (user feedback 2026-11-03) [checkpoint: cc35f7b]
 - [x] Task: Engine — SWAP action, natural 2×2 block match detection, refill into vacated slots; remove tray (schema v2) `844aab1`
     - [x] Write tests: swap/move, block detection anywhere on the grid, refill, full games via a swap-playing bot
     - [x] Implement reducer + serialisation v2
@@ -89,7 +89,7 @@ Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.m
 - [x] Task: UI — minimal borders (2px gap, ≤3px radius, no frame) `844aab1`
 - [x] Task: Difficulty selector on the start screen (persisted): Facile = tray mode, Medio = grid ≤3, Difficile = grid 1 `844aab1`
 - [x] Task: Update e2e tests to the new mechanic `844aab1`
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `cc35f7b`
 
 ## Phase 6: Victory, Album & Persistence UX
 - [x] Task: Victory screen (FR-7) `0875fae`
