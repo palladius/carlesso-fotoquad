@@ -1,0 +1,1 @@
+FR-8 (Riccardo 20:28): computeTileSize piles/extraCols options; TableView hasPiles + landscape (tray mode only); CSS grid areas for no-piles/landscape. Tiles ~30% bigger at 1024x620, HUD always visible. Tests: layout unit tests, app tests for classes, e2e 1024x620. Unit 130, e2e green.
