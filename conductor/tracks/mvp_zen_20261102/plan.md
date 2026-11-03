@@ -50,9 +50,9 @@ Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.m
 - [x] Task: Storage (FR-8) `c296902`
     - [x] Write tests: save/load snapshot, unlocked album, records per pack, mute flag, corrupt/old data discarded
     - [x] Implement `storage.ts` over `localStorage` (injectable for tests)
-- [ ] Task: Audio (FR-9)
-    - [ ] Write tests with mocked `AudioContext`: unlock on gesture, mute suppresses playback
-    - [ ] Implement synthesised SFX: tap, land, match chime, victory jingle
+- [x] Task: Audio (FR-9) `e1397d4`
+    - [x] Write tests with mocked `AudioContext`: unlock on gesture, mute suppresses playback
+    - [x] Implement synthesised SFX: tap, land, match chime, victory jingle
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 4: Demo Assets
