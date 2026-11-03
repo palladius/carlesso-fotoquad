@@ -56,26 +56,26 @@ Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.m
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `e1397d4`
 
 ## Phase 4: Demo Assets
-- [ ] Task: Generate 10 portrait 3:4 demo photos with Nano Banana (stylised family scenes / Gamberone, no real faces) → `public/photos/demo/` (optimised WebP/JPEG)
-- [ ] Task: `public/photos/photos.json` with titles, years, tags covering all packs
-- [ ] Task: Card-back art (Gamberone shrimp pattern) and PWA icons (192, 512, maskable)
+- [x] Task: Generate 10 portrait 3:4 demo photos with Nano Banana (stylised family scenes / Gamberone, no real faces) → `public/photos/demo/` (optimised WebP/JPEG) `0875fae`
+- [x] Task: `public/photos/photos.json` with titles, years, tags covering all packs `0875fae`
+- [x] Task: Card-back art (Gamberone shrimp pattern) and PWA icons (192, 512, maskable) `0875fae`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 5: UI — Table & Core Loop
-- [ ] Task: Start screen & pack selection
-    - [ ] Write tests (jsdom): renders available packs, starts game with chosen pack; "Continua" shown when a snapshot exists
-    - [ ] Implement start screen
-- [ ] Task: Table layout & theme (FR-3)
-    - [ ] Write tests: renders 5 piles with counts, 30 grid slots, 2×2 tray, HUD values from state
-    - [ ] Implement responsive CSS Grid layout, felt theme, card backs, tile styling (≥44px targets, focusable buttons)
-- [ ] Task: Interaction wiring (FR-4)
-    - [ ] Write tests: click grid tile dispatches `PLACE_TILE`; click tray tile dispatches `RETURN_TILE`; keyboard activation
-    - [ ] Implement controller: engine ↔ DOM, state persisted after every move
-- [ ] Task: Animations (FLIP) & celebration
-    - [ ] Write tests: reduced-motion path skips flying/confetti; match popup shows title then dismisses
-    - [ ] Implement FLIP tile moves, refill cascade, match popup (~1.5s), confetti, discard-to-album
-- [ ] Task: Hint button (FR-6) — highlight border + glow + pulse ~3s
-- [ ] Task: Mute toggle & audio hooks on engine events
+- [x] Task: Start screen & pack selection `0875fae`
+    - [x] Write tests (jsdom): renders available packs, starts game with chosen pack; "Continua" shown when a snapshot exists
+    - [x] Implement start screen
+- [x] Task: Table layout & theme (FR-3) `844aab1`
+    - [x] Write tests: renders 5 piles with counts, 30 grid slots, 2×2 tray, HUD values from state
+    - [x] Implement responsive CSS Grid layout, felt theme, card backs, tile styling (≥44px targets, focusable buttons)
+- [x] Task: Interaction wiring (FR-4) `844aab1`
+    - [x] Write tests: click grid tile dispatches `PLACE_TILE`; click tray tile dispatches `RETURN_TILE`; keyboard activation
+    - [x] Implement controller: engine ↔ DOM, state persisted after every move
+- [x] Task: Animations (FLIP) & celebration `0875fae`
+    - [x] Write tests: reduced-motion path skips flying/confetti; match popup shows title then dismisses
+    - [x] Implement FLIP tile moves, refill cascade, match popup (~1.5s), confetti, discard-to-album
+- [x] Task: Hint button (FR-6) — highlight border + glow + pulse ~3s `0875fae`
+- [x] Task: Mute toggle & audio hooks on engine events `0875fae`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 5b: Gameplay Revision — in-grid drag & drop (user feedback 2026-11-03)
@@ -92,21 +92,21 @@ Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.m
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 6: Victory, Album & Persistence UX
-- [ ] Task: Victory screen (FR-7)
-    - [ ] Write tests: shows stats, records updated, "Gioca ancora" resets game
-    - [ ] Implement Grand Finale with fireworks/confetti
-- [ ] Task: Album gallery (FR-7)
-    - [ ] Write tests: lists unlocked photos, navigation via arrows/keys/swipe
-    - [ ] Implement fullscreen album
-- [ ] Task: Resume flow (FR-8) — reload mid-game restores exact state
+- [x] Task: Victory screen (FR-7) `0875fae`
+    - [x] Write tests: shows stats, records updated, "Gioca ancora" resets game
+    - [x] Implement Grand Finale with fireworks/confetti
+- [x] Task: Album gallery (FR-7) `0875fae`
+    - [x] Write tests: lists unlocked photos, navigation via arrows/keys/swipe
+    - [x] Implement fullscreen album
+- [x] Task: Resume flow (FR-8) — reload mid-game restores exact state `0875fae`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 7: PWA, E2E & Release
-- [ ] Task: PWA (FR-10)
-    - [ ] Configure `vite-plugin-pwa`: manifest (portrait, felt-green theme), precache app shell + photos
-    - [ ] Playwright test: after first load, go offline, reload, full game still playable
-- [ ] Task: End-to-end game test — play a full small-pack game to victory via the UI (uses engine hint to find matches)
-- [ ] Task: Responsive screenshots at 360×640, 390×844, 1440×900; no overflow assertions
+- [x] Task: PWA (FR-10) `cc35f7b`
+    - [x] Configure `vite-plugin-pwa`: manifest (portrait, felt-green theme), precache app shell + photos
+    - [x] Playwright test: after first load, go offline, reload, full game still playable
+- [x] Task: End-to-end game test — play a full small-pack game to victory via the UI (uses engine hint to find matches) `844aab1`
+- [x] Task: Responsive screenshots at 360×640, 390×844, 1440×900; no overflow assertions `cc35f7b`
 - [ ] Task: Accessibility pass (contrast, focus order, labels) and performance check (< 200ms interactive cached)
-- [ ] Task: README update (how to add private family photos, dev commands, live URL) and deploy to GitHub Pages
+- [x] Task: README update (how to add private family photos, dev commands, live URL) and deploy to GitHub Pages `cc35f7b`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
