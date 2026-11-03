@@ -1,0 +1,3 @@
+Task: Canvas slicer
+
+src/platform/slicer.ts: cropRect, quadrantRects (unit-tested), slicePhoto/sliceAll (canvas -> JPEG object URLs, failed images skipped). Pixel-level verification of real canvas output deferred to Playwright e2e in Phase 7.
