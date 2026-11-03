@@ -25,9 +25,9 @@ Track: `rotation_ux_20261103` · Spec: [spec.md](./spec.md) · Workflow: [workfl
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 3b: Smarter Facile layout (FR-8)
-- [ ] Task: Hide decks when the game doesn't overflow; landscape tray beside the grid
-    - [ ] Write tests: layout sizes, no-piles / landscape classes, e2e 1024×620 fits with tray beside grid
-    - [ ] Implement in `layout.ts`, `table.ts`, CSS
+- [x] Task: Hide decks when the game doesn't overflow; landscape tray beside the grid `89959b0`
+    - [x] Write tests: layout sizes, no-piles / landscape classes, e2e 1024×620 fits with tray beside grid
+    - [x] Implement in `layout.ts`, `table.ts`, CSS
 
 ## Phase 4: Content
 - [x] Task: 16 new demo illustrations + manifest entries (FR-6) `612b1fb`
