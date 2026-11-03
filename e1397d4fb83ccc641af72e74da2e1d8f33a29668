@@ -1,0 +1,3 @@
+Task: Audio (FR-9)
+
+src/platform/audio.ts: tap, land, deal, match arpeggio, 8-bit victory fanfare; graceful without Web Audio.
