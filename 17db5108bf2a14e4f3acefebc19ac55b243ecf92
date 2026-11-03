@@ -1,0 +1,1 @@
+src/platform/rotation.ts selectPhotos (LRU, seeded random ties) + PHOTOS_PER_LEVEL {facile 6, medio 16, difficile 24}; storage lastPlayed/markPlayed game counter. Tests first (red->green).
