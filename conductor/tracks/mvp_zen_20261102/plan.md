@@ -55,11 +55,11 @@ Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.m
     - [x] Implement synthesised SFX: tap, land, match chime, victory jingle
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `e1397d4`
 
-## Phase 4: Demo Assets
+## Phase 4: Demo Assets [checkpoint: cc35f7b]
 - [x] Task: Generate 10 portrait 3:4 demo photos with Nano Banana (stylised family scenes / Gamberone, no real faces) → `public/photos/demo/` (optimised WebP/JPEG) `0875fae`
 - [x] Task: `public/photos/photos.json` with titles, years, tags covering all packs `0875fae`
 - [x] Task: Card-back art (Gamberone shrimp pattern) and PWA icons (192, 512, maskable) `0875fae`
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `cc35f7b`
 
 ## Phase 5: UI — Table & Core Loop
 - [x] Task: Start screen & pack selection `0875fae`
