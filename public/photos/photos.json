@@ -1,12 +1,72 @@
 [
-  { "id": "tennis_camp", "src": "demo/tennis_camp.jpg", "title": "Campioni al Tennis Camp", "year": 2026, "tags": ["ale", "sebi", "sport"] },
-  { "id": "zurich_tram", "src": "demo/zurich_tram.jpg", "title": "In tram per Zurigo", "year": 2026, "tags": ["ale", "sebi", "zurigo"] },
-  { "id": "lake_zurich", "src": "demo/lake_zurich.jpg", "title": "Pedalò sul Lago di Zurigo", "year": 2025, "tags": ["famiglia", "viaggi", "zurigo"] },
-  { "id": "autumn_bikes", "src": "demo/autumn_bikes.jpg", "title": "Bici d'autunno", "year": 2025, "tags": ["ale", "sebi", "autunno"] },
-  { "id": "beach_holiday", "src": "demo/beach_holiday.jpg", "title": "Vacanze al mare", "year": 2025, "tags": ["viaggi", "vacanze", "mare"] },
-  { "id": "ski_day", "src": "demo/ski_day.jpg", "title": "Giornata sugli sci", "year": 2026, "tags": ["ale", "sebi", "viaggi", "neve"] },
-  { "id": "birthday_cake", "src": "demo/birthday_cake.jpg", "title": "Buon compleanno!", "year": 2026, "tags": ["ale", "sebi", "festa"] },
-  { "id": "gamberone_chef", "src": "demo/gamberone_chef.jpg", "title": "Gamberone Chef", "year": 2026, "tags": ["gamberone", "dreamworks"] },
-  { "id": "gamberone_astronaut", "src": "demo/gamberone_astronaut.jpg", "title": "Gamberone nello spazio", "year": 2026, "tags": ["gamberone", "dreamworks"] },
-  { "id": "dragon_knights", "src": "demo/dragon_knights.jpg", "title": "Cavalieri e il drago", "year": 2026, "tags": ["ale", "sebi", "dreamworks"] }
+  {
+    "id": "tennis_camp",
+    "src": "demo/tennis_camp.jpg",
+    "title": "Campioni al Tennis Camp",
+    "year": 2026,
+    "tags": ["ale", "sebi", "sport"]
+  },
+  {
+    "id": "zurich_tram",
+    "src": "demo/zurich_tram.jpg",
+    "title": "In tram per Zurigo",
+    "year": 2026,
+    "tags": ["ale", "sebi", "zurigo"]
+  },
+  {
+    "id": "lake_zurich",
+    "src": "demo/lake_zurich.jpg",
+    "title": "Pedalò sul Lago di Zurigo",
+    "year": 2025,
+    "tags": ["famiglia", "viaggi", "zurigo"]
+  },
+  {
+    "id": "autumn_bikes",
+    "src": "demo/autumn_bikes.jpg",
+    "title": "Bici d'autunno",
+    "year": 2025,
+    "tags": ["ale", "sebi", "autunno"]
+  },
+  {
+    "id": "beach_holiday",
+    "src": "demo/beach_holiday.jpg",
+    "title": "Vacanze al mare",
+    "year": 2025,
+    "tags": ["viaggi", "vacanze", "mare"]
+  },
+  {
+    "id": "ski_day",
+    "src": "demo/ski_day.jpg",
+    "title": "Giornata sugli sci",
+    "year": 2026,
+    "tags": ["ale", "sebi", "viaggi", "neve"]
+  },
+  {
+    "id": "birthday_cake",
+    "src": "demo/birthday_cake.jpg",
+    "title": "Buon compleanno!",
+    "year": 2026,
+    "tags": ["ale", "sebi", "festa"]
+  },
+  {
+    "id": "gamberone_chef",
+    "src": "demo/gamberone_chef.jpg",
+    "title": "Gamberone Chef",
+    "year": 2026,
+    "tags": ["gamberone", "dreamworks"]
+  },
+  {
+    "id": "gamberone_astronaut",
+    "src": "demo/gamberone_astronaut.jpg",
+    "title": "Gamberone nello spazio",
+    "year": 2026,
+    "tags": ["gamberone", "dreamworks"]
+  },
+  {
+    "id": "dragon_knights",
+    "src": "demo/dragon_knights.jpg",
+    "title": "Cavalieri e il drago",
+    "year": 2026,
+    "tags": ["ale", "sebi", "dreamworks"]
+  }
 ]
