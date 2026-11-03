@@ -17,6 +17,8 @@ const launchOptions = existsSync(systemChrome)
   : {};
 
 const PORT = 4173;
+// Set PW_BASE_URL to test against an already running server (e.g. `just dev`).
+const external = process.env.PW_BASE_URL;
 
 export default defineConfig({
   testDir: './e2e',
@@ -24,7 +26,7 @@ export default defineConfig({
   fullyParallel: true,
   reporter: process.env.CI ? 'line' : 'list',
   use: {
-    baseURL: `http://localhost:${PORT}`,
+    baseURL: external ?? `http://localhost:${PORT}`,
     launchOptions,
     trace: 'retain-on-failure',
   },
@@ -40,10 +42,12 @@ export default defineConfig({
     },
     { name: 'desktop', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },
   ],
-  webServer: {
-    command: `npm run build && npx vite preview --port ${PORT} --strictPort`,
-    port: PORT,
-    reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-  },
+  webServer: external
+    ? undefined
+    : {
+        command: `npm run build && npx vite preview --port ${PORT} --strictPort`,
+        port: PORT,
+        reuseExistingServer: !process.env.CI,
+        timeout: 120_000,
+      },
 });

@@ -7,7 +7,7 @@
   --card-blue: #23468f;
   --tile-w: 64px;
   --tile-h: 85px;
-  --gap: 6px;
+  --gap: 2px;
   font-family:
     system-ui,
     -apple-system,
@@ -141,6 +141,42 @@ button:focus-visible {
   background: transparent;
 }
 
+.howto {
+  margin: 0;
+  max-width: 420px;
+  opacity: 0.9;
+}
+
+.difficulty {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  width: min(100%, 440px);
+}
+
+.diff-btn {
+  display: grid;
+  gap: 2px;
+  padding: 10px;
+  min-height: 56px;
+  border-radius: 14px;
+  border: 2px solid rgb(255 255 255 / 0.18);
+  background: rgb(0 0 0 / 0.22);
+}
+
+.diff-btn.active {
+  border-color: var(--gold);
+  background: rgb(244 197 66 / 0.22);
+}
+
+.diff-btn .label {
+  font-weight: 700;
+}
+
+.diff-btn small {
+  opacity: 0.75;
+}
+
 .loading .spinner {
   width: 48px;
   height: 48px;
@@ -158,25 +194,18 @@ button:focus-visible {
 
 /* ---------- table ---------- */
 .table {
-  --pile-h: calc(var(--tile-h) * 0.7);
-  --pile-w: calc(var(--tile-w) * 0.7);
+  --pile-h: calc(var(--tile-h) * 0.6);
+  --pile-w: calc(var(--tile-w) * 0.6);
   min-height: 100dvh;
   display: grid;
-  grid-template-areas: 'piles' 'grid' 'tray' 'hud';
-  grid-template-rows: auto auto auto 1fr;
+  grid-template-areas: 'piles' 'grid' 'hud';
+  grid-template-rows: auto auto 1fr;
   justify-content: center;
   justify-items: center;
   align-content: start;
-  gap: calc(var(--gap) * 1.5);
-  padding: 10px 10px calc(8px + env(safe-area-inset-bottom));
+  gap: 8px;
+  padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
   user-select: none;
-}
-
-.table.landscape {
-  grid-template-areas: 'piles piles' 'grid tray' 'hud hud';
-  grid-template-rows: auto auto 1fr;
-  column-gap: 32px;
-  align-items: start;
 }
 
 .piles {
@@ -248,48 +277,72 @@ button:focus-visible {
   gap: var(--gap);
 }
 
-.slot,
-.tray-slot {
+.slot {
+  position: relative;
   width: var(--tile-w);
   height: var(--tile-h);
-  border-radius: 8px;
+  border-radius: 3px;
 }
 
-.slot {
-  background: rgb(0 0 0 / 0.12);
+.slot.empty {
+  background: rgb(0 0 0 / 0.14);
 }
 
+.slot.drop-target {
+  outline: 3px solid var(--gold);
+  outline-offset: -1px;
+  z-index: 2;
+}
+
+/* Photo first: no frame, ~1px separation (2px grid gap), tiny radius. */
 .tile {
   display: block;
   width: 100%;
   height: 100%;
   padding: 0;
-  border: 2px solid rgb(255 255 255 / 0.85);
-  border-radius: 8px;
-  background-color: #ddd;
+  border: 0;
+  border-radius: 3px;
+  background-color: #2a2a2a;
   background-size: cover;
   background-position: center;
-  box-shadow: 0 3px 6px rgb(0 0 0 / 0.35);
   transform-origin: 0 0;
-  transition:
-    translate 0.12s,
-    box-shadow 0.12s,
-    border-color 0.2s;
-  touch-action: manipulation;
+  touch-action: none;
+  transition: filter 0.12s;
+}
+
+.tile.dragging {
+  position: relative;
+  z-index: 50;
+  cursor: grabbing;
+  /* excluded from hit-testing so the slot underneath can be found (pointer capture keeps the events) */
+  pointer-events: none;
+  scale: 1.08;
+  box-shadow: 0 12px 24px rgb(0 0 0 / 0.55);
+  transition: none;
+}
+
+.tile.selected {
+  outline: 3px solid #fff;
+  outline-offset: -3px;
+  filter: brightness(1.12);
+}
+
+.tile.solved {
+  border-radius: 0;
+  filter: brightness(1.15) saturate(1.1);
 }
 
 @media (hover: hover) {
   .grid .tile:hover {
-    translate: 0 -3px;
-    box-shadow: 0 7px 12px rgb(0 0 0 / 0.4);
+    filter: brightness(1.08);
+    cursor: grab;
   }
 }
 
 .tile.hint {
-  border-color: var(--gold);
-  box-shadow:
-    0 0 0 3px var(--gold),
-    0 0 18px 6px rgb(244 197 66 / 0.8);
+  outline: 3px solid var(--gold);
+  outline-offset: -3px;
+  box-shadow: 0 0 16px 4px rgb(244 197 66 / 0.75);
   animation: pulse 0.8s ease-in-out infinite alternate;
 }
 
@@ -304,18 +357,19 @@ button:focus-visible {
   display: grid;
   grid-template-columns: repeat(2, var(--tile-w));
   gap: var(--gap);
-  padding: 8px;
-  border-radius: 14px;
+  padding: 6px;
+  border-radius: 10px;
   background: rgb(0 0 0 / 0.25);
   box-shadow: inset 0 2px 8px rgb(0 0 0 / 0.4);
-  transition:
-    gap 0.25s,
-    padding 0.25s;
 }
 
 .tray-slot {
   position: relative;
-  border: 2px dashed rgb(255 255 255 / 0.3);
+  width: var(--tile-w);
+  height: var(--tile-h);
+  border-radius: 3px;
+  outline: 2px dashed rgb(255 255 255 / 0.3);
+  outline-offset: -2px;
 }
 
 .tray-slot::before {
@@ -351,13 +405,17 @@ button:focus-visible {
 }
 
 .tray.merged .tray-slot {
-  border-color: transparent;
+  outline-color: transparent;
 }
 
-.tray.merged .tile {
-  border-color: transparent;
-  border-radius: 0;
-  box-shadow: none;
+.table.mode-tray {
+  grid-template-areas: 'piles' 'grid' 'tray' 'hud';
+  grid-template-rows: auto auto auto 1fr;
+}
+
+.table.mode-tray .tile {
+  touch-action: manipulation;
+  cursor: pointer;
 }
 
 .hud {

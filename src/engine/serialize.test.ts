@@ -7,7 +7,7 @@ import { makePhotos } from './test-helpers';
 describe('serialize / deserialize', () => {
   it('round-trips a game in progress', () => {
     const s0 = createGame(makePhotos(10), 3);
-    const s1 = reduce(s0, { type: 'PLACE_TILE', gridIndex: 0 }).state;
+    const s1 = reduce(s0, { type: 'SWAP', from: 0, to: 1 }).state;
     expect(deserialize(serialize(s1))).toEqual(s1);
   });
 
@@ -27,7 +27,8 @@ describe('serialize / deserialize', () => {
     const s = createGame(makePhotos(2), 1);
     expect(deserialize(JSON.stringify({ ...s, grid: 'nope' }))).toBeNull();
     expect(deserialize(JSON.stringify({ ...s, piles: [[1]] }))).toBeNull();
-    expect(deserialize(JSON.stringify({ ...s, tray: { TL: null } }))).toBeNull();
+    expect(deserialize(JSON.stringify({ ...s, version: 1 }))).toBeNull();
+    expect(deserialize(JSON.stringify({ ...s, options: { ...s.options, maxCompletable: 'x' } }))).toBeNull();
     expect(deserialize(JSON.stringify({ ...s, moves: '3' }))).toBeNull();
   });
 });

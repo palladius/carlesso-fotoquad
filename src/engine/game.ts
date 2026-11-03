@@ -3,12 +3,12 @@ import { createRng, shuffle } from './rng';
 import { allTileIds } from './tiles';
 import { DEFAULT_OPTIONS, type GameOptions, type GameState, type Photo, type TileId } from './types';
 
-export { allTileIds, parseTile, tileId, visibleTiles } from './tiles';
+export { allTileIds, findBlocks, parseTile, tileId, visibleTiles } from './tiles';
 
-/** Tableau size: capped at columns × rows, rounded up to whole rows for small decks. */
+/** Tableau size: capped at columns × rows, whole rows for small decks, at least 2 rows (a 2×2 must fit). */
 export function gridSizeFor(tileCount: number, options: GameOptions): number {
-  const max = options.columns * options.rows;
-  return Math.min(max, Math.ceil(tileCount / options.columns) * options.columns);
+  const rows = Math.min(options.rows, Math.max(2, Math.ceil(tileCount / options.columns)));
+  return rows * options.columns;
 }
 
 export function createGame(
@@ -27,7 +27,7 @@ export function createGame(
   deck.forEach((t, i) => piles[i % options.piles]?.push(t));
 
   const state: GameState = {
-    version: 1,
+    version: 2,
     seed,
     rngState: 0,
     options,

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { allTileIds, createGame, gridSizeFor, parseTile, tileId, visibleTiles } from './game';
 import { makePhotos } from './test-helpers';
+import { DEFAULT_OPTIONS } from './types';
 
 describe('tile ids', () => {
   it('round-trips photo id and quadrant', () => {
@@ -15,11 +16,12 @@ describe('tile ids', () => {
 
 describe('gridSizeFor', () => {
   it('caps at columns × rows', () => {
-    expect(gridSizeFor(200, { columns: 5, rows: 6, piles: 5 })).toBe(30);
+    expect(gridSizeFor(200, DEFAULT_OPTIONS)).toBe(30);
   });
-  it('rounds small decks up to whole rows', () => {
-    expect(gridSizeFor(12, { columns: 5, rows: 6, piles: 5 })).toBe(15);
-    expect(gridSizeFor(20, { columns: 5, rows: 6, piles: 5 })).toBe(20);
+  it('rounds small decks up to whole rows, with at least 2 rows so a 2×2 block fits', () => {
+    expect(gridSizeFor(12, DEFAULT_OPTIONS)).toBe(15);
+    expect(gridSizeFor(20, DEFAULT_OPTIONS)).toBe(20);
+    expect(gridSizeFor(4, DEFAULT_OPTIONS)).toBe(10);
   });
 });
 
@@ -49,9 +51,8 @@ describe('createGame', () => {
     expect(g.piles.flat()).toHaveLength(0);
   });
 
-  it('starts with an empty tray and zeroed counters', () => {
+  it('starts with zeroed counters', () => {
     const g = createGame(makePhotos(10), 1, undefined, 1000);
-    expect(Object.values(g.tray).every((t) => t === null)).toBe(true);
     expect(g.moves).toBe(0);
     expect(g.hintsUsed).toBe(0);
     expect(g.solved).toEqual([]);
@@ -71,7 +72,7 @@ describe('createGame', () => {
     expect(() => createGame([], 1)).toThrow();
   });
 
-  it('visibleTiles lists grid + tray tiles', () => {
+  it('visibleTiles lists grid tiles', () => {
     const g = createGame(makePhotos(10), 1);
     expect(visibleTiles(g)).toHaveLength(30);
   });

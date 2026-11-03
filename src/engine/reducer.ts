@@ -1,6 +1,6 @@
 import { completablePhotos, dealInto } from './dealer';
 import { createRng } from './rng';
-import { parseTile, tileId } from './tiles';
+import { findBlocks, parseTile, tileId } from './tiles';
 import {
   QUADRANTS,
   type Action,
@@ -16,12 +16,16 @@ export function reduce(prev: GameState, action: Action): StepResult {
   const state = structuredClone(prev);
   const events: GameEvent[] = [];
   switch (action.type) {
+    case 'SWAP':
+      if (state.options.mode === 'grid' && swap(state, action.from, action.to, events))
+        resolveMatches(state, events, action.now ?? 0);
+      break;
     case 'PLACE_TILE':
-      place(state, action.gridIndex, events);
-      if (events.length) resolveMatch(state, events, action.now ?? 0);
+      if (state.options.mode === 'tray' && place(state, action.gridIndex, events))
+        resolveTrayMatch(state, events, action.now ?? 0);
       break;
     case 'RETURN_TILE':
-      giveBack(state, action.quadrant, events);
+      if (state.options.mode === 'tray') giveBack(state, action.quadrant, events);
       break;
     case 'HINT': {
       const hint = findHint(state);
@@ -37,19 +41,21 @@ export function reduce(prev: GameState, action: Action): StepResult {
   return events.length ? { state, events } : { state: prev, events };
 }
 
-/** FR-6: the 4 tiles of a completable photo, preferring the one most advanced in the tray. */
+/** FR-6: the 4 tiles of a completable photo (tray mode prefers the photo already started in the tray). */
 export function findHint(state: GameState): { photoId: string; tileIds: string[] } | null {
   const options = completablePhotos(state);
-  if (options.length === 0) return null;
+  if (!options.length) return null;
   const inTray = (p: string) => QUADRANTS.filter((q) => state.tray[q] === tileId(p, q)).length;
   let best = options[0] as string;
   for (const p of options) if (inTray(p) > inTray(best)) best = p;
   return { photoId: best, tileIds: QUADRANTS.map((q) => tileId(best, q)) };
 }
 
-function place(state: GameState, gridIndex: number, events: GameEvent[]): void {
+// ---------- tray mode (Facile) ----------
+
+function place(state: GameState, gridIndex: number, events: GameEvent[]): boolean {
   const id = state.grid[gridIndex];
-  if (!id) return;
+  if (!id) return false;
   const { quadrant } = parseTile(id);
   const old = state.tray[quadrant];
   state.grid[gridIndex] = null;
@@ -57,13 +63,13 @@ function place(state: GameState, gridIndex: number, events: GameEvent[]): void {
   state.moves += 1;
   events.push({ type: 'placed', tileId: id, from: gridIndex, to: quadrant });
   if (old) {
-    // Conflict rule (FR-4.2): the old tile goes back to the slot just vacated; the new tile
-    // inherits the old tile's (still empty) origin slot.
+    // Conflict: the old tile goes back to the slot just vacated; the new tile inherits its empty origin.
     state.grid[gridIndex] = old;
     events.push({ type: 'replaced', tileId: old, from: quadrant, to: gridIndex });
   } else {
     state.trayOrigin[quadrant] = gridIndex;
   }
+  return true;
 }
 
 function giveBack(state: GameState, quadrant: Quadrant, events: GameEvent[]): void {
@@ -78,24 +84,70 @@ function giveBack(state: GameState, quadrant: Quadrant, events: GameEvent[]): vo
   events.push({ type: 'returned', tileId: id, from: quadrant, to: target });
 }
 
-/** FR-4.5/4.6: if the tray holds a full photo, discard it, refill empty slots and check victory. */
-function resolveMatch(state: GameState, events: GameEvent[], now: number): void {
+function resolveTrayMatch(state: GameState, events: GameEvent[], now: number): void {
   const ids = QUADRANTS.map((q) => state.tray[q]);
   if (ids.some((t) => t === null)) return;
   const photos = new Set(ids.map((t) => parseTile(t as string).photoId));
   if (photos.size !== 1) return;
-  const [photoId] = photos as Set<string>;
-
+  const [photoId] = [...photos] as [string];
   for (const q of QUADRANTS) {
     state.tray[q] = null;
     state.trayOrigin[q] = null;
   }
-  state.solved.push(photoId as string);
-  events.push({ type: 'matched', photoId: photoId as string, tileIds: ids as string[] });
+  state.solved.push(photoId);
+  events.push({ type: 'matched', photoId, tileIds: ids as string[], slots: [] });
+  refillAndCheck(
+    state,
+    events,
+    state.grid.flatMap((t, i) => (t === null ? [i] : [])),
+    now,
+  );
+}
 
-  const empty = state.grid.flatMap((t, i) => (t === null ? [i] : []));
+function refillAndCheck(state: GameState, events: GameEvent[], slots: number[], now: number): void {
   const rng = createRng(state.seed, state.rngState);
-  events.push(...dealInto(state, empty, rng));
+  events.push(...dealInto(state, slots, rng));
+  state.rngState = rng.state;
+  if (state.solved.length === state.photoIds.length) {
+    state.finishedAt = now;
+    events.push({
+      type: 'won',
+      moves: state.moves,
+      hintsUsed: state.hintsUsed,
+      durationMs: now - state.startedAt,
+    });
+  }
+}
+
+/** FR-4.1: swap two slots (or move into an empty one). */
+function swap(state: GameState, from: number, to: number, events: GameEvent[]): boolean {
+  const n = state.grid.length;
+  if (from === to || from < 0 || to < 0 || from >= n || to >= n) return false;
+  const moved = state.grid[from];
+  if (!moved) return false;
+  const displaced = state.grid[to] ?? null;
+  state.grid[to] = moved;
+  state.grid[from] = displaced;
+  state.moves += 1;
+  events.push({ type: 'swapped', from, to, moved, displaced });
+  return true;
+}
+
+/** FR-4.3/4.4: discard every natural 2×2 block, refill the vacated slots, check victory. */
+function resolveMatches(state: GameState, events: GameEvent[], now: number): void {
+  const blocks = findBlocks(state.grid, state.options.columns);
+  if (!blocks.length) return;
+  const vacated: number[] = [];
+  for (const b of blocks) {
+    const tileIds = b.slots.map((i) => state.grid[i] as string);
+    for (const i of b.slots) state.grid[i] = null;
+    vacated.push(...b.slots);
+    state.solved.push(b.photoId);
+    events.push({ type: 'matched', photoId: b.photoId, tileIds, slots: [...b.slots] });
+  }
+  const otherHoles = state.grid.flatMap((t, i) => (t === null && !vacated.includes(i) ? [i] : []));
+  const rng = createRng(state.seed, state.rngState);
+  events.push(...dealInto(state, [...vacated, ...otherHoles], rng));
   state.rngState = rng.state;
 
   if (state.solved.length === state.photoIds.length) {

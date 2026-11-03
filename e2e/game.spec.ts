@@ -1,26 +1,38 @@
 import { expect, test, type Page } from '@playwright/test';
 
-async function solveWithHints(page: Page) {
-  await page.getByRole('button', { name: 'Aiuto' }).click();
-  const hinted = page.locator('.tile.hint');
-  await expect(hinted).toHaveCount(4);
-  const ids = await hinted.evaluateAll((els) => els.map((e) => e.getAttribute('data-tile')));
-  for (const id of ids) {
-    const tile = page.locator(`.grid [data-tile="${id}"]`);
-    if (await tile.count()) await tile.click();
-  }
-}
+const QUADS = ['TL', 'TR', 'BL', 'BR'];
 
-test('plays a full small-pack game to victory and unlocks the album', async ({ page }) => {
+async function fresh(page: Page) {
   await page.goto('/');
   await page.evaluate(() => localStorage.clear());
   await page.reload();
+}
+
+const slotOf = (page: Page, id: string) =>
+  page.locator(`.slot:has([data-tile="${id}"])`).getAttribute('data-slot').then(Number);
+
+/** Uses the hint, then tap-tap swaps the 4 tiles into slots 0,1,5,6. */
+async function solveWithHint(page: Page) {
+  await page.getByRole('button', { name: 'Aiuto' }).click();
+  const first = await page.locator('.tile.hint').first().getAttribute('data-tile');
+  const photo = (first as string).split('#')[0];
+  const targets = [0, 1, 5, 6];
+  for (let k = 0; k < 4; k++) {
+    const id = `${photo}#${QUADS[k]}`;
+    const from = await slotOf(page, id);
+    if (from === targets[k]) continue;
+    await page.locator(`[data-tile="${id}"]`).click();
+    await page.locator(`.slot[data-slot="${targets[k]}"]`).click();
+  }
+}
+
+test('plays a full small-pack game to victory via tap-tap swaps and unlocks the album', async ({ page }) => {
+  await fresh(page);
   await page.locator('[data-pack="gamberone"]').click();
   await expect(page.locator('.grid .tile').first()).toBeVisible();
   await expect(page.locator('.hud-solved')).toHaveText('📸 0 / 3');
-
   for (let i = 1; i <= 3; i++) {
-    await solveWithHints(page);
+    await solveWithHint(page);
     if (i < 3) await expect(page.locator('.hud-solved')).toHaveText(`📸 ${i} / 3`, { timeout: 10_000 });
   }
   await expect(page.getByRole('dialog', { name: 'Vittoria' })).toBeVisible({ timeout: 10_000 });
@@ -28,24 +40,74 @@ test('plays a full small-pack game to victory and unlocks the album', async ({ p
   await expect(page.locator('.album-counter')).toHaveText('1 / 3');
 });
 
-test('resumes an in-progress game after reload', async ({ page }) => {
-  await page.goto('/');
-  await page.evaluate(() => localStorage.clear());
-  await page.reload();
+test('drag & drop swaps two tiles', async ({ page }, info) => {
+  test.skip(info.project.name === 'mobile-portrait', 'mouse drag covered on desktop');
+  await fresh(page);
   await page.locator('[data-pack="all"]').click();
-  await page.locator('.grid .tile').first().click();
+  const a = await page.locator('.slot[data-slot="2"] .tile').getAttribute('data-tile');
+  const b = await page.locator('.slot[data-slot="12"] .tile').getAttribute('data-tile');
+  const from = await page.locator('.slot[data-slot="2"]').boundingBox();
+  const to = await page.locator('.slot[data-slot="12"]').boundingBox();
+  if (!from || !to) throw new Error('no boxes');
+  await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(to.x + to.width / 2, to.y + to.height / 2, { steps: 12 });
+  await expect(page.locator('.slot[data-slot="12"]')).toHaveClass(/drop-target/);
+  await page.mouse.up();
+  await expect(page.locator('.slot[data-slot="12"] .tile')).toHaveAttribute('data-tile', a as string);
+  await expect(page.locator('.slot[data-slot="2"] .tile')).toHaveAttribute('data-tile', b as string);
   await expect(page.locator('.hud-moves')).toHaveText('👣 1');
-  const before = await page.locator('.tray .tile').getAttribute('data-tile');
+});
+
+test('the tableau starts full with exactly one completable photo (Normale)', async ({ page }) => {
+  await fresh(page);
+  await page.locator('[data-pack="all"]').click();
+  await expect(page.locator('.grid .tile')).toHaveCount(30);
+  await expect(page.locator('.slot.empty')).toHaveCount(0);
+});
+
+test('resumes an in-progress game after reload', async ({ page }) => {
+  await fresh(page);
+  await page.locator('[data-pack="all"]').click();
+  await page.locator('.slot[data-slot="0"] .tile').click();
+  await page.locator('.slot[data-slot="7"]').click();
+  await expect(page.locator('.hud-moves')).toHaveText('👣 1');
+  const before = await page.locator('.slot[data-slot="7"] .tile').getAttribute('data-tile');
   await page.reload();
   await page.getByRole('button', { name: /Continua la partita/ }).click();
   await expect(page.locator('.hud-moves')).toHaveText('👣 1');
-  await expect(page.locator('.tray .tile')).toHaveAttribute('data-tile', before as string);
+  await expect(page.locator('.slot[data-slot="7"] .tile')).toHaveAttribute('data-tile', before as string);
 });
 
-test('tapping a tray tile sends it back to the grid', async ({ page }) => {
-  await page.goto('/');
-  await page.evaluate(() => localStorage.clear());
+test('difficulty choice is remembered', async ({ page }) => {
+  await fresh(page);
+  await page.locator('[data-difficulty="facile"]').click();
   await page.reload();
+  await expect(page.locator('[data-difficulty="facile"]')).toHaveAttribute('aria-checked', 'true');
+});
+
+test('Facile: tap-to-tray full game to victory', async ({ page }) => {
+  await fresh(page);
+  await page.locator('[data-difficulty="facile"]').click();
+  await page.locator('[data-pack="gamberone"]').click();
+  await expect(page.locator('.tray')).toBeVisible();
+  for (let i = 1; i <= 3; i++) {
+    await page.getByRole('button', { name: 'Aiuto' }).click();
+    const ids = await page
+      .locator('.tile.hint')
+      .evaluateAll((els) => els.map((e) => e.getAttribute('data-tile')));
+    for (const id of ids) {
+      const t = page.locator(`.grid [data-tile="${id}"]`);
+      if (await t.count()) await t.click();
+    }
+    if (i < 3) await expect(page.locator('.hud-solved')).toHaveText(`📸 ${i} / 3`, { timeout: 10_000 });
+  }
+  await expect(page.getByRole('dialog', { name: 'Vittoria' })).toBeVisible({ timeout: 10_000 });
+});
+
+test('Facile: tapping a tray tile sends it back to the grid', async ({ page }) => {
+  await fresh(page);
+  await page.locator('[data-difficulty="facile"]').click();
   await page.locator('[data-pack="all"]').click();
   const first = page.locator('.grid .tile').first();
   const id = await first.getAttribute('data-tile');

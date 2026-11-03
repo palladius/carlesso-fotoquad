@@ -4,10 +4,14 @@ import type { GameState } from '../engine/types';
 const GAME_KEY = 'fotoquad.game.v1';
 const PROFILE_KEY = 'fotoquad.profile.v1';
 
+export type Difficulty = 'facile' | 'medio' | 'difficile';
+const DIFFICULTIES: Difficulty[] = ['facile', 'medio', 'difficile'];
+
 interface Profile {
   unlocked: string[];
   records: Record<string, number>;
   muted: boolean;
+  difficulty: Difficulty;
 }
 
 export interface SavedGame {
@@ -26,6 +30,8 @@ export interface GameStorage {
   submitRecord(packId: string, moves: number): boolean;
   muted(): boolean;
   setMuted(muted: boolean): void;
+  difficulty(): Difficulty;
+  setDifficulty(d: Difficulty): void;
 }
 
 /** FR-8: versioned localStorage persistence; never throws, discards corrupt data. */
@@ -46,7 +52,7 @@ export function createStorage(backing: Storage): GameStorage {
     }
   };
   const profile = (): Profile => {
-    const fresh: Profile = { unlocked: [], records: {}, muted: false };
+    const fresh: Profile = { unlocked: [], records: {}, muted: false, difficulty: 'medio' };
     try {
       const p = JSON.parse(read(PROFILE_KEY) ?? 'null') as Partial<Profile> | null;
       if (!p || typeof p !== 'object') return fresh;
@@ -54,6 +60,9 @@ export function createStorage(backing: Storage): GameStorage {
         unlocked: Array.isArray(p.unlocked) ? p.unlocked.filter((x) => typeof x === 'string') : [],
         records: p.records && typeof p.records === 'object' ? p.records : {},
         muted: p.muted === true,
+        difficulty: DIFFICULTIES.includes(p.difficulty as Difficulty)
+          ? (p.difficulty as Difficulty)
+          : 'medio',
       };
     } catch {
       return fresh;
@@ -97,6 +106,12 @@ export function createStorage(backing: Storage): GameStorage {
     setMuted(muted) {
       const p = profile();
       p.muted = muted;
+      saveProfile(p);
+    },
+    difficulty: () => profile().difficulty,
+    setDifficulty(d) {
+      const p = profile();
+      p.difficulty = d;
       saveProfile(p);
     },
   };

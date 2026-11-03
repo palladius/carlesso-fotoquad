@@ -1,5 +1,6 @@
 import type { Photo } from '../engine/types';
 import type { Pack } from '../platform/packs';
+import type { Difficulty } from '../platform/storage';
 import { h } from './dom';
 import { confetti } from './fx';
 
@@ -8,9 +9,42 @@ export interface StartScreenProps {
   records: Record<string, number | null>;
   resume: { packName: string; solved: number; total: number } | null;
   albumCount: number;
+  difficulty: Difficulty;
+  onDifficulty(d: Difficulty): void;
   onStart(pack: Pack): void;
   onResume(): void;
   onAlbum(): void;
+}
+
+function difficultyPicker(current: Difficulty, onChange: (d: Difficulty) => void): HTMLElement {
+  const opts: [Difficulty, string, string][] = [
+    ['facile', '🐣 Facile', 'tocca: i pezzi vanno nel vassoio'],
+    ['medio', '🙂 Medio', 'trascina, fino a 3 foto fattibili'],
+    ['difficile', '🧠 Difficile', 'trascina, 1 sola foto fattibile'],
+  ];
+  const box = h('div', { class: 'difficulty', role: 'radiogroup', 'aria-label': 'Difficoltà' });
+  const render = (sel: Difficulty) =>
+    box.replaceChildren(
+      ...opts.map(([d, label, hint]) =>
+        h(
+          'button',
+          {
+            class: `diff-btn${d === sel ? ' active' : ''}`,
+            role: 'radio',
+            'aria-checked': String(d === sel),
+            'data-difficulty': d,
+            onclick: () => {
+              onChange(d);
+              render(d);
+            },
+          },
+          h('span', { class: 'label', text: label }),
+          h('small', { text: hint }),
+        ),
+      ),
+    );
+  render(current);
+  return box;
 }
 
 export function startScreen(p: StartScreenProps): HTMLElement {
@@ -19,6 +53,7 @@ export function startScreen(p: StartScreenProps): HTMLElement {
     { class: 'screen start' },
     h('h1', { class: 'logo' }, h('span', { text: '📸🧩' }), ' FotoQuad'),
     h('p', { class: 'tagline', text: 'Il Solitario di Famiglia' }),
+    h('p', { class: 'howto', text: 'Ricomponi ogni foto dai suoi 4 pezzi ✨' }),
     p.resume
       ? h(
           'button',
@@ -28,6 +63,8 @@ export function startScreen(p: StartScreenProps): HTMLElement {
           h('small', { text: `${p.resume.packName} · ${p.resume.solved}/${p.resume.total}` }),
         )
       : null,
+    h('h2', { text: 'Difficoltà' }),
+    difficultyPicker(p.difficulty, p.onDifficulty),
     h('h2', { text: 'Scegli il mazzo' }),
     h(
       'div',

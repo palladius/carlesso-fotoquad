@@ -87,7 +87,7 @@ Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.m
     - [ ] Implement draw selection from hidden pile tiles
 - [ ] Task: UI — pointer drag & drop + tap-tap swap + keyboard, drop-target highlight, no tray, larger tiles
 - [ ] Task: UI — minimal borders (2px gap, ≤3px radius, no frame)
-- [ ] Task: Difficulty selector on the start screen (persisted)
+- [ ] Task: Difficulty selector on the start screen (persisted): Facile = tray mode, Medio = grid ≤3, Difficile = grid 1
 - [ ] Task: Update e2e tests to the new mechanic
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 

@@ -1,11 +1,12 @@
 import type { Rng } from './rng';
 import { shuffle } from './rng';
-import { parseTile, tileId, visibleTiles } from './tiles';
-import { QUADRANTS, type GameEvent, type GameState, type TileId } from './types';
+import { findBlocks, parseTile, tileId, visibleTiles } from './tiles';
+import { QUADRANTS, UNLIMITED, type GameEvent, type GameState, type TileId } from './types';
 
-/** Unsolved photos whose 4 quadrants are all visible (grid + tray). */
+/** Unsolved photos whose 4 quadrants are all on the tableau. */
 export function completablePhotos(state: GameState): string[] {
-  return photosCompleteIn(new Set(visibleTiles(state)), unsolved(state));
+  const visible = new Set(visibleTiles(state));
+  return unsolved(state).filter((p) => QUADRANTS.every((q) => visible.has(tileId(p, q))));
 }
 
 function unsolved(state: GameState): string[] {
@@ -13,26 +14,9 @@ function unsolved(state: GameState): string[] {
   return state.photoIds.filter((p) => !solved.has(p));
 }
 
-function photosCompleteIn(tiles: ReadonlySet<TileId>, photoIds: readonly string[]): string[] {
-  return photoIds.filter((p) => QUADRANTS.every((q) => tiles.has(tileId(p, q))));
-}
-
-/** True if any photo sits in the grid as its natural, already-solved 2×2 block. */
+/** True if any photo already sits as its natural 2×2 block. */
 export function hasNaturalAdjacency(grid: readonly (TileId | null)[], columns: number): boolean {
-  for (let i = 0; i < grid.length; i++) {
-    const t = grid[i];
-    if (!t || i % columns === columns - 1) continue;
-    const { photoId, quadrant } = parseTile(t);
-    if (quadrant !== 'TL') continue;
-    if (
-      grid[i + 1] === tileId(photoId, 'TR') &&
-      grid[i + columns] === tileId(photoId, 'BL') &&
-      grid[i + columns + 1] === tileId(photoId, 'BR')
-    ) {
-      return true;
-    }
-  }
-  return false;
+  return findBlocks(grid, columns).length > 0;
 }
 
 interface Pick {
@@ -40,7 +24,7 @@ interface Pick {
   index: number;
 }
 
-/** Simulates drawing `k` cards, always from the tallest pile (ties → lowest index). */
+/** Positions of the next `k` cards, always drawn from the tallest pile (ties → lowest index). */
 function planDraws(piles: readonly TileId[][], k: number): Pick[] {
   const heights = piles.map((p) => p.length);
   const picks: Pick[] = [];
@@ -56,82 +40,93 @@ function planDraws(piles: readonly TileId[][], k: number): Pick[] {
   return picks;
 }
 
-function tileAt(state: GameState, pick: Pick): TileId {
-  return state.piles[pick.pile]?.[pick.index] as TileId;
-}
-
-function locate(state: GameState, id: TileId): Pick | null {
-  for (let p = 0; p < state.piles.length; p++) {
-    const index = state.piles[p]?.indexOf(id) ?? -1;
-    if (index >= 0) return { pile: p, index };
-  }
-  return null;
-}
-
-function swap(state: GameState, a: Pick, b: Pick): void {
-  const pa = state.piles[a.pile] as TileId[];
-  const pb = state.piles[b.pile] as TileId[];
-  const tmp = pa[a.index] as TileId;
-  pa[a.index] = pb[b.index] as TileId;
-  pb[b.index] = tmp;
-}
-
 /**
- * Re-orders pile cards so that the upcoming draws guarantee at least one completable photo
- * in the visible set (SPEC FR-5).
+ * Chooses which `k` hidden tiles to reveal so that the tableau holds at least 1 and (when possible) at most
+ * `maxCompletable` completable photos (FR-5).
  */
-function ensureSolvable(state: GameState, picks: Pick[], rng: Rng): void {
-  const open = unsolved(state);
-  if (open.length === 0 || picks.length === 0) return;
-  const visible = new Set(visibleTiles(state));
-  const drawn = () => new Set(picks.map((p) => tileAt(state, p)));
-  const union = new Set([...visible, ...drawn()]);
-  if (photosCompleteIn(union, open).length > 0) return;
+function chooseDraw(state: GameState, k: number, rng: Rng): TileId[] {
+  const pool = shuffle(state.piles.flat(), rng);
+  if (k >= pool.length) return pool;
+  const count = new Map<string, number>();
+  for (const p of unsolved(state)) count.set(p, 0);
+  for (const t of visibleTiles(state)) {
+    const p = parseTile(t).photoId;
+    if (count.has(p)) count.set(p, (count.get(p) ?? 0) + 1);
+  }
+  const chosen = new Set<TileId>();
+  const take = (t: TileId) => {
+    chosen.add(t);
+    const p = parseTile(t).photoId;
+    count.set(p, (count.get(p) ?? 0) + 1);
+  };
+  const complete = () => [...count.values()].filter((n) => n === 4).length;
+  const unlimited = state.options.maxCompletable >= UNLIMITED;
+  const target = Math.max(1, state.options.maxCompletable);
+  const wanted = !unlimited && target > 1 ? 1 + rng.int(target) : 1;
 
-  // Pick the photo needing the fewest extra tiles (ties broken by the RNG).
-  let best: string[] = [];
-  let bestMissing = Infinity;
-  for (const p of open) {
-    const missing = QUADRANTS.filter((q) => !union.has(tileId(p, q))).length;
-    if (missing < bestMissing) {
-      bestMissing = missing;
-      best = [p];
-    } else if (missing === bestMissing) {
-      best.push(p);
+  // 1. Complete photos (fewest missing tiles first) until at least `wanted` are completable.
+  while (complete() < wanted) {
+    const left = k - chosen.size;
+    const candidates = [...count.entries()]
+      .filter(([, n]) => n < 4 && 4 - n <= left)
+      .sort((a, b) => b[1] - a[1] || rng.next() - 0.5);
+    const best = candidates[0];
+    if (!best) break;
+    for (const q of QUADRANTS) {
+      const t = tileId(best[0], q);
+      if (pool.includes(t) && !chosen.has(t)) take(t);
     }
   }
-  const target = best[rng.int(best.length)] as string;
-  const missingTiles = QUADRANTS.map((q) => tileId(target, q)).filter((t) => !union.has(t));
-  for (const m of missingTiles) {
-    const from = locate(state, m);
-    const current = drawn();
-    const swappable = picks.filter((p) => {
-      const t = tileAt(state, p);
-      return parseTile(t).photoId !== target && current.has(t);
-    });
-    if (!from || swappable.length === 0) return;
-    swap(state, from, swappable[rng.int(swappable.length)] as Pick);
+  // 2. Fill the rest without completing new photos (any tile when unlimited).
+  for (const t of pool) {
+    if (chosen.size >= k) break;
+    if (chosen.has(t)) continue;
+    if (unlimited || (count.get(parseTile(t).photoId) ?? 0) < 3) take(t);
   }
+  // 3. Unavoidable: any remaining tile now completes a photo.
+  for (const t of pool) {
+    if (chosen.size >= k) break;
+    if (!chosen.has(t)) take(t);
+  }
+  return [...chosen];
 }
 
 /**
- * Deals cards from the piles into the given empty grid slots, guaranteeing solvability and
- * avoiding trivial 2×2 layouts. Mutates `state`; returns `dealt` events in deal order.
+ * Deals cards from the piles into the given empty grid slots, honouring the difficulty and never dealing a
+ * pre-solved 2×2 block. Mutates `state`; returns `dealt` events in deal order.
  */
 export function dealInto(state: GameState, slots: readonly number[], rng: Rng): GameEvent[] {
   const total = state.piles.reduce((n, p) => n + p.length, 0);
   const k = Math.min(slots.length, total);
-  const picks = planDraws(state.piles, k);
-  ensureSolvable(state, picks, rng);
+  if (k === 0) return [];
+  const chosen = new Set(chooseDraw(state, k, rng));
 
-  const drawn: { tileId: TileId; pile: number }[] = picks.map((p) => {
-    const t = (state.piles[p.pile] as TileId[]).pop() as TileId;
-    return { tileId: t, pile: p.pile };
+  // Move the chosen (hidden) tiles to the top positions that will be drawn, keeping piles balanced.
+  const picks = planDraws(state.piles, k);
+  const pickKeys = new Set(picks.map((p) => `${p.pile}:${p.index}`));
+  const misplaced: Pick[] = [];
+  const freeAtTop: Pick[] = [];
+  state.piles.forEach((pile, pi) =>
+    pile.forEach((t, ii) => {
+      const atTop = pickKeys.has(`${pi}:${ii}`);
+      if (chosen.has(t) && !atTop) misplaced.push({ pile: pi, index: ii });
+      if (!chosen.has(t) && atTop) freeAtTop.push({ pile: pi, index: ii });
+    }),
+  );
+  misplaced.forEach((m, i) => {
+    const f = freeAtTop[i] as Pick;
+    const a = state.piles[m.pile] as TileId[];
+    const b = state.piles[f.pile] as TileId[];
+    [a[m.index], b[f.index]] = [b[f.index] as TileId, a[m.index] as TileId];
   });
 
+  const drawn = picks.map((p) => ({
+    tileId: (state.piles[p.pile] as TileId[]).pop() as TileId,
+    pile: p.pile,
+  }));
   const targets = slots.slice(0, k);
   let order = drawn;
-  for (let attempt = 0; attempt < 50; attempt++) {
+  for (let attempt = 0; attempt < 60; attempt++) {
     order = shuffle(drawn, rng);
     order.forEach((d, i) => (state.grid[targets[i] as number] = d.tileId));
     if (!hasNaturalAdjacency(state.grid, state.options.columns)) break;

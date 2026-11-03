@@ -22,7 +22,10 @@ describe('storage', () => {
   it('discards a corrupt saved game', () => {
     backing.setItem('fotoquad.game.v1', '{broken');
     expect(createStorage(backing).loadGame()).toBeNull();
-    backing.setItem('fotoquad.game.v1', JSON.stringify({ packId: 'x', state: { version: 9 } }));
+    backing.setItem(
+      'fotoquad.game.v1',
+      JSON.stringify({ packId: 'x', state: JSON.stringify({ version: 9 }) }),
+    );
     expect(createStorage(backing).loadGame()).toBeNull();
   });
 
@@ -47,6 +50,15 @@ describe('storage', () => {
     expect(s.muted()).toBe(false);
     s.setMuted(true);
     expect(createStorage(backing).muted()).toBe(true);
+  });
+
+  it('persists the difficulty (default medio) and ignores unknown values', () => {
+    const s = createStorage(backing);
+    expect(s.difficulty()).toBe('medio');
+    s.setDifficulty('facile');
+    expect(createStorage(backing).difficulty()).toBe('facile');
+    backing.setItem('fotoquad.profile.v1', JSON.stringify({ difficulty: 'normale' }));
+    expect(createStorage(backing).difficulty()).toBe('medio');
   });
 
   it('ignores garbage in the profile', () => {

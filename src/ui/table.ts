@@ -2,7 +2,7 @@ import { parseTile } from '../engine/tiles';
 import { QUADRANTS, type GameEvent, type GameState, type Quadrant, type TileId } from '../engine/types';
 import type { SlicedPhoto } from '../platform/slicer';
 import { h, reducedMotion, sleep } from './dom';
-import { confetti, flipFrom, moveWithFlip } from './fx';
+import { confetti, flipFrom } from './fx';
 import { computeTileSize } from './layout';
 
 const Q_LABEL: Record<Quadrant, string> = {
@@ -13,6 +13,7 @@ const Q_LABEL: Record<Quadrant, string> = {
 };
 
 export interface TableHandlers {
+  onSwap(from: number, to: number): void;
   onGridTap(gridIndex: number): void;
   onTrayTap(quadrant: Quadrant): void;
   onHint(): void;
@@ -26,18 +27,35 @@ export interface TableOptions {
   photosById: Map<string, SlicedPhoto>;
 }
 
-/** Renders the solitaire table and animates engine events (FR-3, FR-4). */
+interface Drag {
+  id: TileId;
+  from: number;
+  pointerId: number;
+  x0: number;
+  y0: number;
+  dragging: boolean;
+  target: number | null;
+}
+
+type Sfx = (s: 'tap' | 'land' | 'match' | 'deal') => void;
+
+/** Renders the tableau, handles drag & drop / tap-tap swaps and animates engine events (FR-3, FR-4). */
 export class TableView {
   readonly root: HTMLElement;
   private readonly pileEls: HTMLElement[] = [];
   private readonly slotEls: HTMLElement[] = [];
-  private readonly trayEl: HTMLElement;
-  private readonly traySlots = {} as Record<Quadrant, HTMLElement>;
   private readonly tiles = new Map<TileId, HTMLButtonElement>();
+  private readonly trayEl: HTMLElement | null = null;
+  private readonly traySlots = {} as Record<Quadrant, HTMLElement>;
+  private readonly trayMode: boolean;
   private readonly solvedEl: HTMLElement;
   private readonly movesEl: HTMLElement;
   private readonly albumBtn: HTMLButtonElement;
   private hintTimer: ReturnType<typeof setTimeout> | undefined;
+  private drag: Drag | null = null;
+  private selected: number | null = null;
+  /** Visual rect of the tile just dropped, so the swap animation starts where the finger left it. */
+  private dropRect: { id: TileId; rect: DOMRect } | null = null;
   private onResize = () => this.layout();
   busy = false;
 
@@ -46,6 +64,7 @@ export class TableView {
     private readonly handlers: TableHandlers,
     private readonly opts: TableOptions,
   ) {
+    this.trayMode = state.options.mode === 'tray';
     const piles = h('div', { class: 'piles', 'aria-label': 'Mazzi di pesca' });
     for (let i = 0; i < state.options.piles; i++) {
       const pile = h('div', { class: 'pile' }, h('span', { class: 'pile-count' }));
@@ -54,16 +73,21 @@ export class TableView {
     }
     const grid = h('div', { class: 'grid', role: 'group', 'aria-label': 'Tavolo' });
     grid.style.setProperty('--cols', String(state.options.columns));
-    state.grid.forEach(() => {
-      const slot = h('div', { class: 'slot' });
+    state.grid.forEach((_, i) => {
+      const slot = h('div', { class: 'slot', 'data-slot': i });
+      slot.addEventListener('click', () => {
+        if (!slot.firstElementChild) this.tapSlot(i);
+      });
       this.slotEls.push(slot);
       grid.append(slot);
     });
-    this.trayEl = h('div', { class: 'tray', role: 'group', 'aria-label': 'Vassoio di ricomposizione' });
-    for (const q of QUADRANTS) {
-      const s = h('div', { class: `tray-slot tray-${q}`, 'data-q': q });
-      this.traySlots[q] = s;
-      this.trayEl.append(s);
+    if (this.trayMode) {
+      this.trayEl = h('div', { class: 'tray', role: 'group', 'aria-label': 'Vassoio di ricomposizione' });
+      for (const q of QUADRANTS) {
+        const slot = h('div', { class: `tray-slot tray-${q}`, 'data-q': q });
+        this.traySlots[q] = slot;
+        this.trayEl.append(slot);
+      }
     }
     this.solvedEl = h('span', { class: 'hud-solved' });
     this.movesEl = h('span', { class: 'hud-moves' });
@@ -98,7 +122,7 @@ export class TableView {
       this.albumBtn,
       muteBtn,
     );
-    this.root = h('main', { class: 'table' }, piles, grid, this.trayEl, hud);
+    this.root = h('main', { class: `table mode-${state.options.mode}` }, piles, grid, this.trayEl, hud);
     this.reconcile(state);
     window.addEventListener('resize', this.onResize);
     this.layout();
@@ -111,39 +135,118 @@ export class TableView {
   }
 
   layout(): void {
-    const {
-      w,
-      h: th,
-      landscape,
-    } = computeTileSize(
+    const { w, h: th } = computeTileSize(
       window.innerWidth,
       window.innerHeight,
       this.state.options.columns,
-      this.state.options.rows,
+      this.state.grid.length / this.state.options.columns + (this.trayMode ? 2.3 : 0),
     );
     this.root.style.setProperty('--tile-w', `${w}px`);
     this.root.style.setProperty('--tile-h', `${th}px`);
-    this.root.classList.toggle('landscape', landscape);
   }
+
+  // ---------- input ----------
 
   private tileEl(id: TileId): HTMLButtonElement {
     let el = this.tiles.get(id);
     if (!el) {
       const { photoId, quadrant } = parseTile(id);
       const src = this.opts.photosById.get(photoId)?.quadrants[quadrant];
-      el = h('button', {
-        class: `tile q-${quadrant}`,
-        'data-tile': id,
-        'aria-label': `Tessera ${Q_LABEL[quadrant]}`,
-      });
+      el = h('button', { class: 'tile', 'data-tile': id, 'aria-label': `Tessera ${Q_LABEL[quadrant]}` });
       if (src) el.style.backgroundImage = `url("${src}")`;
-      el.addEventListener('click', () => this.onTileClick(id));
-      this.tiles.set(id, el);
+      const tile = el;
+      tile.addEventListener('pointerdown', (e) => this.onPointerDown(e, id, tile));
+      tile.addEventListener('pointermove', (e) => this.onPointerMove(e, tile));
+      tile.addEventListener('pointerup', (e) => this.onPointerUp(e, tile));
+      tile.addEventListener('pointercancel', () => this.cancelDrag(tile));
+      tile.addEventListener('click', () => {
+        if (this.trayMode) this.trayModeTap(id);
+      });
+      tile.addEventListener('keydown', (e) => {
+        if (this.trayMode) return; // native button click handles Enter/Space
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          this.tapSlot(this.state.grid.indexOf(id));
+        }
+      });
+      this.tiles.set(id, tile);
     }
     return el;
   }
 
-  private onTileClick(id: TileId): void {
+  private onPointerDown(e: PointerEvent, id: TileId, el: HTMLElement): void {
+    if (this.busy || e.button > 0 || this.trayMode) return;
+    const from = this.state.grid.indexOf(id);
+    if (from < 0) return;
+    el.setPointerCapture?.(e.pointerId);
+    this.drag = {
+      id,
+      from,
+      pointerId: e.pointerId,
+      x0: e.clientX,
+      y0: e.clientY,
+      dragging: false,
+      target: null,
+    };
+  }
+
+  private onPointerMove(e: PointerEvent, el: HTMLElement): void {
+    const d = this.drag;
+    if (!d || d.pointerId !== e.pointerId) return;
+    const dx = e.clientX - d.x0;
+    const dy = e.clientY - d.y0;
+    if (!d.dragging && Math.hypot(dx, dy) < 8) return;
+    if (!d.dragging) {
+      d.dragging = true;
+      this.select(null);
+      el.classList.add('dragging');
+    }
+    el.style.translate = `${dx}px ${dy}px`;
+    const target = this.slotAt(e.clientX, e.clientY);
+    if (target !== d.target) {
+      if (d.target !== null) this.slotEls[d.target]?.classList.remove('drop-target');
+      d.target = target !== null && target !== d.from ? target : null;
+      if (d.target !== null) this.slotEls[d.target]?.classList.add('drop-target');
+    }
+  }
+
+  private onPointerUp(e: PointerEvent, el: HTMLElement): void {
+    const d = this.drag;
+    if (!d || d.pointerId !== e.pointerId) return;
+    if (!d.dragging) {
+      this.drag = null;
+      this.tapSlot(d.from);
+      return;
+    }
+    const rect = el.getBoundingClientRect();
+    this.cancelDrag(el);
+    if (d.target !== null) {
+      this.dropRect = { id: d.id, rect };
+      this.handlers.onSwap(d.from, d.target);
+    } else {
+      flipFrom(el, rect, 200); // snap back
+    }
+  }
+
+  private cancelDrag(el: HTMLElement): void {
+    const d = this.drag;
+    if (d?.target !== null && d?.target !== undefined)
+      this.slotEls[d.target]?.classList.remove('drop-target');
+    el.classList.remove('dragging');
+    el.style.translate = '';
+    this.drag = null;
+  }
+
+  private slotAt(x: number, y: number): number | null {
+    for (const el of document.elementsFromPoint(x, y)) {
+      const slot = (el as HTMLElement).closest?.('.slot') as HTMLElement | null;
+      if (slot && this.root.contains(slot)) return Number(slot.dataset.slot);
+    }
+    return null;
+  }
+
+  /** Facile: tap a grid tile → tray; tap a tray tile → back to the grid. */
+  private trayModeTap(id: TileId): void {
     if (this.busy) return;
     const q = QUADRANTS.find((x) => this.state.tray[x] === id);
     if (q) this.handlers.onTrayTap(q);
@@ -153,12 +256,35 @@ export class TableView {
     }
   }
 
+  /** Tap-tap alternative: first tap selects, second tap on another slot swaps. */
+  private tapSlot(i: number): void {
+    if (this.busy || i < 0 || this.trayMode) return;
+    if (this.selected === null) {
+      if (this.state.grid[i]) this.select(i);
+    } else if (this.selected === i) {
+      this.select(null);
+    } else {
+      const from = this.selected;
+      this.select(null);
+      this.handlers.onSwap(from, i);
+    }
+  }
+
+  private select(i: number | null): void {
+    if (this.selected !== null) this.slotEls[this.selected]?.firstElementChild?.classList.remove('selected');
+    this.selected = i;
+    if (i !== null) this.slotEls[i]?.firstElementChild?.classList.add('selected');
+  }
+
+  // ---------- rendering ----------
+
   /** Brings the DOM in line with `state` without animation. */
   reconcile(state: GameState): void {
     this.state = state;
     const keep = new Set<TileId>();
     state.grid.forEach((id, i) => {
       const slot = this.slotEls[i] as HTMLElement;
+      slot.classList.toggle('empty', !id);
       if (id) {
         keep.add(id);
         const el = this.tileEl(id);
@@ -167,7 +293,7 @@ export class TableView {
     });
     for (const q of QUADRANTS) {
       const id = state.tray[q];
-      if (id) {
+      if (id && this.trayEl) {
         keep.add(id);
         const el = this.tileEl(id);
         if (el.parentElement !== this.traySlots[q]) this.traySlots[q].append(el);
@@ -193,40 +319,62 @@ export class TableView {
     });
   }
 
-  /** Animates engine events, then reconciles with the new state. Resolves when done. */
-  async play(
-    events: GameEvent[],
-    next: GameState,
-    sfx: (s: 'tap' | 'land' | 'match' | 'deal') => void,
-  ): Promise<void> {
+  /** Animates engine events, then reconciles with the new state. */
+  async play(events: GameEvent[], next: GameState, sfx: Sfx): Promise<void> {
     const prevPiles = this.state.piles.map((p) => p.length);
     this.state = next;
     for (const e of events) {
       switch (e.type) {
-        case 'placed':
-          sfx('tap');
-          moveWithFlip(this.tileEl(e.tileId), this.traySlots[e.to]);
-          break;
-        case 'replaced':
-        case 'returned':
+        case 'swapped': {
           sfx('land');
-          moveWithFlip(this.tileEl(e.tileId), this.slotEls[e.to] as HTMLElement);
+          const moved = this.tileEl(e.moved);
+          const first = this.dropRect?.id === e.moved ? this.dropRect.rect : moved.getBoundingClientRect();
+          this.dropRect = null;
+          const displaced = e.displaced ? this.tileEl(e.displaced) : null;
+          const firstD = displaced?.getBoundingClientRect();
+          (this.slotEls[e.to] as HTMLElement).append(moved);
+          if (displaced) (this.slotEls[e.from] as HTMLElement).append(displaced);
+          this.slotEls[e.from]?.classList.toggle('empty', !displaced);
+          this.slotEls[e.to]?.classList.remove('empty');
+          flipFrom(moved, first, 220);
+          if (displaced && firstD) flipFrom(displaced, firstD, 260);
           break;
+        }
+        case 'placed': {
+          sfx('tap');
+          const el = this.tileEl(e.tileId);
+          const first = el.getBoundingClientRect();
+          this.traySlots[e.to].append(el);
+          this.slotEls[e.from]?.classList.add('empty');
+          flipFrom(el, first);
+          break;
+        }
+        case 'replaced':
+        case 'returned': {
+          sfx('land');
+          const el = this.tileEl(e.tileId);
+          const first = el.getBoundingClientRect();
+          (this.slotEls[e.to] as HTMLElement).append(el);
+          this.slotEls[e.to]?.classList.remove('empty');
+          flipFrom(el, first);
+          break;
+        }
         case 'matched':
           this.busy = true;
           this.clearHint();
-          await this.celebrate(e.photoId, sfx);
+          if (!reducedMotion()) await sleep(260);
+          await this.celebrate(e.photoId, e.slots, sfx);
           break;
         case 'dealt': {
           const el = this.tileEl(e.tileId);
-          const pile = this.pileEls[e.pile] as HTMLElement;
-          const first = pile.getBoundingClientRect();
+          const first = (this.pileEls[e.pile] as HTMLElement).getBoundingClientRect();
           (this.slotEls[e.to] as HTMLElement).append(el);
+          this.slotEls[e.to]?.classList.remove('empty');
           prevPiles[e.pile] = (prevPiles[e.pile] ?? 1) - 1;
           this.updateHud(next, prevPiles);
           sfx('deal');
           flipFrom(el, first, 420);
-          if (!reducedMotion()) await sleep(90);
+          if (!reducedMotion()) await sleep(110);
           break;
         }
         case 'hint':
@@ -240,13 +388,16 @@ export class TableView {
     this.busy = false;
   }
 
-  private async celebrate(photoId: string, sfx: (s: 'match') => void): Promise<void> {
+  private async celebrate(photoId: string, slots: number[], sfx: Sfx): Promise<void> {
     const sliced = this.opts.photosById.get(photoId);
     const motion = !reducedMotion();
-    await sleep(motion ? 320 : 50);
-    this.trayEl.classList.add('merged');
+    const blockTiles = slots.length
+      ? slots.map((i) => this.slotEls[i]?.firstElementChild as HTMLElement | null)
+      : QUADRANTS.map((q) => this.traySlots[q]?.firstElementChild as HTMLElement | null);
+    for (const t of blockTiles) t?.classList.add('solved');
+    this.trayEl?.classList.toggle('merged', !slots.length);
     sfx('match');
-    const r = this.trayEl.getBoundingClientRect();
+    const first = blockTiles[0]?.getBoundingClientRect();
     const popup = h(
       'div',
       { class: 'match-popup', role: 'status' },
@@ -261,48 +412,54 @@ export class TableView {
     );
     document.body.append(popup);
     confetti(window.innerWidth / 2, window.innerHeight / 2);
-    if (motion)
-      await popup
+    const fig = popup.firstElementChild as HTMLElement;
+    if (motion && first) {
+      const r = fig.getBoundingClientRect();
+      await fig
         .animate(
           [
-            { transform: `translateY(${r.top - window.innerHeight / 2}px) scale(.4)`, opacity: 0 },
-            { transform: 'none', opacity: 1 },
+            {
+              transform: `translate(${first.left - r.left}px, ${first.top - r.top}px) scale(${(first.width * 2) / r.width})`,
+              opacity: 0.6,
+            },
+            { transform: 'rotate(-2deg)', opacity: 1 },
           ],
-          { duration: 380, easing: 'cubic-bezier(.2,.9,.3,1.2)' },
+          { duration: 420, easing: 'cubic-bezier(.2,.9,.3,1.15)' },
         )
-        .finished.catch(() => {});
+        .finished.catch(() => undefined);
+    }
     await sleep(1500);
     if (motion)
       await popup
-        .animate([{ opacity: 1 }, { opacity: 0, transform: 'scale(.9)' }], {
-          duration: 250,
-          fill: 'forwards',
-        })
-        .finished.catch(() => {});
+        .animate([{ opacity: 1 }, { opacity: 0 }], { duration: 240, fill: 'forwards' })
+        .finished.catch(() => undefined);
     popup.remove();
-    // discard the 4 tiles towards the Album button
     const target = this.albumBtn.getBoundingClientRect();
-    const anims = QUADRANTS.map((q) => {
-      const el = this.traySlots[q].firstElementChild as HTMLElement | null;
-      if (!el || !motion || typeof el.animate !== 'function') return Promise.resolve();
-      const b = el.getBoundingClientRect();
-      return el
-        .animate(
-          [
-            { transform: 'none', opacity: 1 },
-            {
-              transform: `translate(${target.left - b.left}px, ${target.top - b.top}px) scale(.15)`,
-              opacity: 0,
-            },
-          ],
-          { duration: 380, easing: 'ease-in', fill: 'forwards' },
-        )
-        .finished.then(() => undefined)
-        .catch(() => undefined);
-    });
-    await Promise.all(anims);
-    for (const q of QUADRANTS) this.traySlots[q].replaceChildren();
-    this.trayEl.classList.remove('merged');
+    await Promise.all(
+      blockTiles.map((el) => {
+        if (!el || !motion || typeof el.animate !== 'function') return Promise.resolve();
+        const b = el.getBoundingClientRect();
+        return el
+          .animate(
+            [
+              { transform: 'none', opacity: 1 },
+              {
+                transform: `translate(${target.left - b.left}px, ${target.top - b.top}px) scale(.15)`,
+                opacity: 0,
+              },
+            ],
+            { duration: 380, easing: 'ease-in', fill: 'forwards' },
+          )
+          .finished.then(() => undefined)
+          .catch(() => undefined);
+      }),
+    );
+    for (const i of slots) {
+      this.slotEls[i]?.replaceChildren();
+      this.slotEls[i]?.classList.add('empty');
+    }
+    if (!slots.length) for (const q of QUADRANTS) this.traySlots[q]?.replaceChildren();
+    this.trayEl?.classList.remove('merged');
   }
 
   showHint(tileIds: readonly TileId[]): void {

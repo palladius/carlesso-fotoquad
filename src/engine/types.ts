@@ -21,18 +21,35 @@ export interface Tile {
   quadrant: Quadrant;
 }
 
-export type Tray = Record<Quadrant, TileId | null>;
+/**
+ * `tray`: tap a tile and it flies to its slot in a 2×2 assembly tray (Facile, for small kids).
+ * `grid`: drag & drop swaps inside the tableau; a natural 2×2 block is a match (Medio / Difficile).
+ */
+export type GameMode = 'tray' | 'grid';
 
 export interface GameOptions {
   columns: number;
   rows: number;
   piles: number;
+  mode: GameMode;
+  /** Max completable photos after a deal: 1 = Difficile, 3 = Medio, UNLIMITED = Facile (FR-5). */
+  maxCompletable: number;
 }
 
-export const DEFAULT_OPTIONS: GameOptions = { columns: 5, rows: 6, piles: 5 };
+export const UNLIMITED = 99;
+
+export const DEFAULT_OPTIONS: GameOptions = {
+  columns: 5,
+  rows: 6,
+  piles: 5,
+  mode: 'grid',
+  maxCompletable: 1,
+};
+
+export type Tray = Record<Quadrant, TileId | null>;
 
 export interface GameState {
-  version: 1;
+  version: 2;
   seed: number;
   rngState: number;
   options: GameOptions;
@@ -41,6 +58,7 @@ export interface GameState {
   piles: TileId[][];
   /** Tableau slots (row-major, `columns` wide). */
   grid: (TileId | null)[];
+  /** Assembly tray (tray mode only; always empty in grid mode). */
   tray: Tray;
   /** For each tray tile, the (empty) grid slot it returns to. */
   trayOrigin: Record<Quadrant, number | null>;
@@ -53,15 +71,18 @@ export interface GameState {
 }
 
 export type Action =
+  | { type: 'SWAP'; from: number; to: number; now?: number }
   | { type: 'PLACE_TILE'; gridIndex: number; now?: number }
   | { type: 'RETURN_TILE'; quadrant: Quadrant; now?: number }
   | { type: 'HINT'; now?: number };
 
 export type GameEvent =
+  | { type: 'swapped'; from: number; to: number; moved: TileId; displaced: TileId | null }
   | { type: 'placed'; tileId: TileId; from: number; to: Quadrant }
   | { type: 'replaced'; tileId: TileId; from: Quadrant; to: number }
   | { type: 'returned'; tileId: TileId; from: Quadrant; to: number }
-  | { type: 'matched'; photoId: string; tileIds: TileId[] }
+  /** `slots` are grid slots in grid mode, empty in tray mode (tiles were in the tray). */
+  | { type: 'matched'; photoId: string; tileIds: TileId[]; slots: number[] }
   | { type: 'dealt'; tileId: TileId; pile: number; to: number }
   | { type: 'hint'; photoId: string; tileIds: TileId[] }
   | { type: 'won'; moves: number; hintsUsed: number; durationMs: number };

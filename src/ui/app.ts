@@ -1,6 +1,14 @@
 import { createGame } from '../engine/game';
 import { reduce } from '../engine/reducer';
-import type { Action, GameState, Photo } from '../engine/types';
+import {
+  DEFAULT_OPTIONS,
+  UNLIMITED,
+  type Action,
+  type GameOptions,
+  type GameState,
+  type Photo,
+} from '../engine/types';
+import type { Difficulty } from '../platform/storage';
 import type { GameAudio } from '../platform/audio';
 import type { Pack } from '../platform/packs';
 import { buildPacks } from '../platform/packs';
@@ -17,6 +25,12 @@ export interface AppDeps {
   slice(photos: Photo[]): Promise<SlicedPhoto[]>;
   now(): number;
   seed(): number;
+}
+
+/** Facile = tap-to-tray (small kids); Medio/Difficile = in-grid drag & drop with ≤3 / exactly 1 doable photo. */
+export function optionsFor(d: Difficulty): GameOptions {
+  if (d === 'facile') return { ...DEFAULT_OPTIONS, mode: 'tray', maxCompletable: UNLIMITED };
+  return { ...DEFAULT_OPTIONS, mode: 'grid', maxCompletable: d === 'medio' ? 3 : 1 };
 }
 
 /** Orchestrates screens, engine and persistence. */
@@ -56,6 +70,8 @@ export class App {
             }
           : null,
         albumCount: this.unlockedPhotos().length,
+        difficulty: this.d.storage.difficulty(),
+        onDifficulty: (d) => this.d.storage.setDifficulty(d),
         onStart: (pack) => void this.newGame(pack),
         onResume: () => resumable && void this.openGame(resumable.packId, resumable.state),
         onAlbum: () => this.openAlbum(),
@@ -67,8 +83,12 @@ export class App {
     const photos = pack.photoIds.map((id) => this.photosById.get(id)).filter((p): p is Photo => !!p);
     const ready = await this.ensureSliced(photos);
     if (!ready.length) return;
-    const state = createGame(ready, this.d.seed(), undefined, this.d.now());
+    const state = createGame(ready, this.d.seed(), this.gameOptions(), this.d.now());
     await this.openGame(pack.id, state);
+  }
+
+  private gameOptions(): GameOptions {
+    return optionsFor(this.d.storage.difficulty());
   }
 
   private async ensureSliced(photos: Photo[]): Promise<Photo[]> {
@@ -87,7 +107,7 @@ export class App {
       // some photo could not be loaded: start a fresh game with what we have
       this.d.storage.clearGame();
       if (!ready.length) return this.showStart();
-      state = createGame(ready, this.d.seed(), undefined, this.d.now());
+      state = createGame(ready, this.d.seed(), this.gameOptions(), this.d.now());
     }
     this.packId = packId;
     this.state = state;
@@ -96,6 +116,7 @@ export class App {
     this.table = new TableView(
       state,
       {
+        onSwap: (from, to) => void this.dispatch({ type: 'SWAP', from, to, now: this.d.now() }),
         onGridTap: (i) => void this.dispatch({ type: 'PLACE_TILE', gridIndex: i, now: this.d.now() }),
         onTrayTap: (q) => void this.dispatch({ type: 'RETURN_TILE', quadrant: q }),
         onHint: () => void this.dispatch({ type: 'HINT' }),

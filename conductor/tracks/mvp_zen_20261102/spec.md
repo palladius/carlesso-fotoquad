@@ -24,7 +24,7 @@ PWA offline support. Shuffle/Pesca Tattica and Party modes are out of scope (fut
 - **Top bar**: 5 face-down draw piles with card-back art and remaining-count badge.
 - **Tableau**: 5 columns × 6 rows (30 slots), always kept **full** while the piles have cards. Small decks use
   fewer rows (minimum 2, so a 2×2 block always fits).
-- **No assembly tray** *(revised 2026-11-03)*.
+- **Assembly tray** only in the Facile level (FR-4b).
 - **Minimal borders** *(revised 2026-11-03)*: every pixel of border hides photo. Tiles have no frame, ~1px
   separation (2px gap) and at most a ~3px corner radius, so a correct 2×2 block reads as the whole photo.
 - **HUD**: "Foto risolte: X / N", moves counter, Hint button, Album button, mute toggle, menu.
@@ -40,10 +40,19 @@ PWA offline support. Shuffle/Pesca Tattica and Party modes are out of scope (fut
 4. **Refill**: 4 new tiles are dealt from the piles into the 4 vacated slots (cascading animation), until the
    piles are empty.
 
+### FR-4b Difficulty levels *(revised 2026-11-03, user feedback)*
+| Level | Mechanic | Completable photos after each deal |
+|---|---|---|
+| 🐣 **Facile** (small kids) | original tap-to-tray: a tapped tile flies to its quadrant slot in a 2×2 assembly tray (conflict → old tile returns to the vacated slot; tap a tray tile to send it back) | ≥ 1, no upper limit |
+| 🙂 **Medio** (default) | in-grid drag & drop (FR-4) | 1–3 |
+| 🧠 **Difficile** | in-grid drag & drop (FR-4) | exactly 1 |
+
+The chosen level is persisted. The tray is shown only in Facile.
+
 ### FR-5 Difficulty & solvability guarantee *(revised 2026-11-03)*
 - After the initial deal and after every refill, the tableau MUST contain **at least one** completable photo
-  (all 4 quadrants visible) while photos remain unsolved, and **at most `maxCompletable`**: 1 in **Normale**
-  (default), 3 in **Facile** — whenever that is mathematically possible.
+  (all 4 quadrants visible) while photos remain unsolved, and **at most `maxCompletable`**: 1 in **Difficile**,
+  3 in **Medio**, unlimited in **Facile** — whenever that is mathematically possible.
 - The dealer achieves this by choosing which hidden pile tiles are drawn (deterministic given the seed).
 - Note: with U unsolved photos, V visible tiles and P = 4U − V tiles in the piles, at least U − P photos are
   necessarily complete. Decks with ≥ 10–15 photos per pack keep the "only one" rule for most of the game; with

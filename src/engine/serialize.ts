@@ -1,6 +1,6 @@
 import { QUADRANTS, type GameState } from './types';
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export function serialize(state: GameState): string {
   return JSON.stringify(state);
@@ -32,16 +32,18 @@ export function deserialize(raw: string): GameState | null {
     isNum(opts.columns) &&
     isNum(opts.rows) &&
     isNum(opts.piles) &&
+    isNum(opts.maxCompletable) &&
+    (opts.mode === 'tray' || opts.mode === 'grid') &&
+    !!tray &&
+    QUADRANTS.every((q) => q in tray && isSlot(tray[q])) &&
+    !!origin &&
+    QUADRANTS.every((q) => q in origin && isSlotOrNum(origin[q])) &&
     Array.isArray(s.photoIds) &&
     s.photoIds.every(isStr) &&
     Array.isArray(s.piles) &&
     s.piles.every((p) => Array.isArray(p) && p.every(isStr)) &&
     Array.isArray(s.grid) &&
     s.grid.every(isSlot) &&
-    !!tray &&
-    QUADRANTS.every((q) => q in tray && isSlot(tray[q])) &&
-    !!origin &&
-    QUADRANTS.every((q) => q in origin && isSlotOrNum(origin[q])) &&
     Array.isArray(s.solved) &&
     s.solved.every(isStr) &&
     isNum(s.moves) &&

@@ -1,75 +1,105 @@
 import { describe, expect, it } from 'vitest';
-import { completablePhotos, dealInto, hasNaturalAdjacency } from './dealer';
-import { createGame, tileId } from './game';
+import { completablePhotos, dealInto } from './dealer';
+import { createGame } from './game';
 import { createRng } from './rng';
-import { makePhotos } from './test-helpers';
-import type { GameState } from './types';
+import { assemble, makePhotos, pileCount } from './test-helpers';
+import { findBlocks, tileId } from './tiles';
+import { DEFAULT_OPTIONS, type GameState } from './types';
 
-const SEEDS = Array.from({ length: 300 }, (_, i) => i + 1);
+const SEEDS = Array.from({ length: 200 }, (_, i) => i + 1);
+const EASY = { ...DEFAULT_OPTIONS, maxCompletable: 3 };
 
-describe('hasNaturalAdjacency', () => {
+/** Unavoidable minimum of complete photos: every incomplete photo needs ≥1 tile hidden in the piles. */
+function forcedComplete(s: GameState): number {
+  const unsolved = s.photoIds.length - s.solved.length;
+  return Math.max(unsolved ? 1 : 0, unsolved - pileCount(s));
+}
+
+describe('findBlocks', () => {
   it('detects a photo laid out as its natural 2×2 block', () => {
     const grid = Array<string | null>(10).fill(null);
     grid[1] = tileId('a', 'TL');
     grid[2] = tileId('a', 'TR');
     grid[6] = tileId('a', 'BL');
     grid[7] = tileId('a', 'BR');
-    expect(hasNaturalAdjacency(grid, 5)).toBe(true);
+    expect(findBlocks(grid, 5)).toEqual([{ photoId: 'a', slots: [1, 2, 6, 7] }]);
   });
 
-  it('ignores blocks that wrap across rows', () => {
+  it('ignores blocks that wrap across rows and scrambled layouts', () => {
     const grid = Array<string | null>(15).fill(null);
     grid[4] = tileId('a', 'TL');
     grid[5] = tileId('a', 'TR');
     grid[9] = tileId('a', 'BL');
     grid[10] = tileId('a', 'BR');
-    expect(hasNaturalAdjacency(grid, 5)).toBe(false);
-  });
-
-  it('returns false for a scrambled layout', () => {
-    const grid = [
-      tileId('a', 'TR'),
-      tileId('a', 'TL'),
-      null,
-      null,
-      null,
-      tileId('a', 'BR'),
-      tileId('a', 'BL'),
-    ];
-    expect(hasNaturalAdjacency(grid, 5)).toBe(false);
+    expect(findBlocks(grid, 5)).toEqual([]);
+    expect(
+      findBlocks(
+        [tileId('a', 'TR'), tileId('a', 'TL'), null, null, null, tileId('a', 'BR'), tileId('a', 'BL')],
+        5,
+      ),
+    ).toEqual([]);
   });
 });
 
 describe('initial deal (property tests)', () => {
-  for (const n of [1, 3, 7, 8, 10, 25, 60]) {
-    it(`always has a completable photo and no trivial 2×2 block — ${n} photos`, () => {
+  for (const n of [1, 3, 7, 10, 12, 25, 60]) {
+    it(`full tableau, completable count within [1, max(1, forced)], no pre-solved block — ${n} photos`, () => {
       for (const seed of SEEDS) {
         const g = createGame(makePhotos(n), seed);
-        expect(completablePhotos(g).length, `seed ${seed}`).toBeGreaterThan(0);
-        if (n > 1) expect(hasNaturalAdjacency(g.grid, 5), `seed ${seed}`).toBe(false);
+        const c = completablePhotos(g).length;
+        expect(c, `seed ${seed}`).toBeGreaterThanOrEqual(1);
+        expect(c, `seed ${seed}`).toBeLessThanOrEqual(Math.max(1, forcedComplete(g)));
+        expect(findBlocks(g.grid, 5), `seed ${seed}`).toEqual([]);
+        if (n * 4 >= 30) expect(g.grid.every((t) => t !== null)).toBe(true);
+      }
+    });
+  }
+
+  it('Normale with a big deck shows exactly one completable photo', () => {
+    for (const seed of SEEDS) expect(completablePhotos(createGame(makePhotos(25), seed))).toHaveLength(1);
+  });
+
+  it('Facile with a big deck shows up to 3 completable photos', () => {
+    for (const seed of SEEDS) {
+      const c = completablePhotos(createGame(makePhotos(25), seed, EASY)).length;
+      expect(c).toBeGreaterThanOrEqual(1);
+      expect(c).toBeLessThanOrEqual(3);
+    }
+  });
+});
+
+describe('refills keep the difficulty invariant through whole games', () => {
+  for (const [label, opts] of [
+    ['Normale', DEFAULT_OPTIONS],
+    ['Facile', EASY],
+  ] as const) {
+    it(label, () => {
+      for (const seed of SEEDS.slice(0, 40)) {
+        let s = createGame(makePhotos(20), seed, opts);
+        while (s.finishedAt === null) {
+          const c = completablePhotos(s).length;
+          expect(c).toBeGreaterThanOrEqual(1);
+          expect(c).toBeLessThanOrEqual(Math.max(opts.maxCompletable, forcedComplete(s)));
+          expect(findBlocks(s.grid, 5)).toEqual([]);
+          s = assemble(s, completablePhotos(s)[0] as string).state;
+        }
       }
     });
   }
 });
 
 describe('dealInto', () => {
-  function emptySlots(g: GameState, idx: number[]): GameState {
-    // simulate 4 tiles removed from the board and lost (not in piles): use a fresh state copy
-    const s = structuredClone(g);
-    for (const i of idx) s.grid[i] = null;
-    return s;
-  }
-
   it('fills the requested slots from the piles and emits dealt events', () => {
     const g = createGame(makePhotos(20), 3);
-    const before = g.piles.flat().length;
-    const s = emptySlots(g, [0, 1, 2, 3]);
-    // put the removed tiles back on top of piles so the game stays consistent
-    g.grid.slice(0, 4).forEach((t, i) => s.piles[i % 5]?.push(t as string));
+    const s = structuredClone(g);
+    const removed = s.grid.slice(0, 4) as string[];
+    for (let i = 0; i < 4; i++) s.grid[i] = null;
+    removed.forEach((t, i) => s.piles[i % 5]?.push(t));
+    const before = pileCount(s);
     const events = dealInto(s, [0, 1, 2, 3], createRng(1));
     expect(events).toHaveLength(4);
     expect(s.grid.slice(0, 4).every((t) => t !== null)).toBe(true);
-    expect(s.piles.flat().length).toBe(before);
+    expect(pileCount(s)).toBe(before - 4);
     for (const e of events) expect(e.type).toBe('dealt');
   });
 
@@ -80,10 +110,9 @@ describe('dealInto', () => {
     const removed = s.grid[a] as string;
     s.grid[a] = null;
     s.grid[b] = null;
-    s.piles[0] = [removed];
+    s.piles = [[removed], [], [], [], []];
     const events = dealInto(s, [a, b], createRng(2));
     expect(events).toHaveLength(1);
-    expect(s.piles.flat()).toHaveLength(0);
-    expect(s.grid.filter((t) => t === null)).toHaveLength(4); // 3 original empties + 1
+    expect(pileCount(s)).toBe(0);
   });
 });

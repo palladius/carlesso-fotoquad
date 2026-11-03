@@ -14,11 +14,35 @@ export function allTileIds(photoIds: readonly string[]): TileId[] {
 }
 
 export function visibleTiles(state: GameState): TileId[] {
-  const out: TileId[] = [];
-  for (const t of state.grid) if (t) out.push(t);
+  const out = state.grid.filter((t): t is TileId => t !== null);
   for (const q of QUADRANTS) {
     const t = state.tray[q];
     if (t) out.push(t);
+  }
+  return out;
+}
+
+export interface Block {
+  photoId: string;
+  /** Slots of TL, TR, BL, BR. */
+  slots: [number, number, number, number];
+}
+
+/** All photos sitting in the grid as their natural, adjacent 2×2 block (FR-4.3). */
+export function findBlocks(grid: readonly (TileId | null)[], columns: number): Block[] {
+  const out: Block[] = [];
+  for (let i = 0; i + columns + 1 < grid.length; i++) {
+    const t = grid[i];
+    if (!t || i % columns === columns - 1) continue;
+    const { photoId, quadrant } = parseTile(t);
+    if (quadrant !== 'TL') continue;
+    if (
+      grid[i + 1] === tileId(photoId, 'TR') &&
+      grid[i + columns] === tileId(photoId, 'BL') &&
+      grid[i + columns + 1] === tileId(photoId, 'BR')
+    ) {
+      out.push({ photoId, slots: [i, i + 1, i + columns, i + columns + 1] });
+    }
   }
   return out;
 }
