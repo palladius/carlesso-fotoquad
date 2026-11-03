@@ -19,12 +19,12 @@ Track: `rotation_ux_20261103` · Spec: [spec.md](./spec.md) · Workflow: [workfl
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 3: Snappy celebration (adversarially reviewed)
-- [ ] Task: Dismissible, shorter celebration popup (FR-7, hardened spec §2.1)
-    - [ ] Write unit + e2e tests from the adversarial review
-    - [ ] Implement
+- [x] Task: Dismissible, shorter celebration popup (FR-7, hardened spec §2.1) `76e965a`
+    - [x] Write unit + e2e tests from the adversarial review
+    - [x] Implement
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 4: Content
 - [x] Task: 16 new demo illustrations + manifest entries (FR-6) `612b1fb`
-- [ ] Task: Real private photos pipeline documented (Immich → `public/photos/private/`) (FR-5)
+- [x] Task: Real private photos pipeline documented (Immich → `public/photos/private/`) (FR-5) `76e965a`
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
