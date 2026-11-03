@@ -19,17 +19,19 @@ for (const [name, vp] of [
   await page.locator('[data-pack="all"]').click();
   await page.waitForSelector('.grid .tile');
   await page.waitForTimeout(800);
-  await page.locator('.grid .tile').nth(0).click();
-  await page.locator('.grid .tile').nth(3).click();
-  await page.waitForTimeout(500);
   await page.screenshot({ path: `${out}-${name}-table.png` });
+  // Solve the hinted photo by tap-tap swapping its 4 tiles into slots 0, 1, 5, 6.
   await page.getByRole('button', { name: 'Aiuto' }).click();
-  const ids = await page
-    .locator('.tile.hint')
-    .evaluateAll((els) => els.map((e) => e.getAttribute('data-tile')));
-  for (const id of ids) {
-    const t = page.locator(`.grid [data-tile="${id}"]`);
-    if (await t.count()) await t.click();
+  const first = await page.locator('.tile.hint').first().getAttribute('data-tile');
+  const photo = first.split('#')[0];
+  const targets = [0, 1, 5, 6];
+  for (const [k, q] of ['TL', 'TR', 'BL', 'BR'].entries()) {
+    const from = Number(
+      await page.locator(`.slot:has([data-tile="${photo}#${q}"])`).getAttribute('data-slot'),
+    );
+    if (from === targets[k]) continue;
+    await page.locator(`[data-tile="${photo}#${q}"]`).click();
+    await page.locator(`.slot[data-slot="${targets[k]}"]`).click();
   }
   await page.waitForTimeout(900);
   await page.screenshot({ path: `${out}-${name}-match.png` });

@@ -25,6 +25,8 @@ export interface TableHandlers {
 export interface TableOptions {
   muted: boolean;
   photosById: Map<string, SlicedPhoto>;
+  /** Immediate feedback sound for selections and drag starts. */
+  tapSound?: () => void;
 }
 
 interface Drag {
@@ -77,6 +79,11 @@ export class TableView {
       const slot = h('div', { class: 'slot', 'data-slot': i });
       slot.addEventListener('click', () => {
         if (!slot.firstElementChild) this.tapSlot(i);
+      });
+      slot.addEventListener('keydown', (e) => {
+        if (slot.firstElementChild || (e.key !== 'Enter' && e.key !== ' ')) return;
+        e.preventDefault();
+        this.tapSlot(i);
       });
       this.slotEls.push(slot);
       grid.append(slot);
@@ -199,6 +206,7 @@ export class TableView {
     if (!d.dragging) {
       d.dragging = true;
       this.select(null);
+      this.opts.tapSound?.();
       el.classList.add('dragging');
     }
     el.style.translate = `${dx}px ${dy}px`;
@@ -260,7 +268,10 @@ export class TableView {
   private tapSlot(i: number): void {
     if (this.busy || i < 0 || this.trayMode) return;
     if (this.selected === null) {
-      if (this.state.grid[i]) this.select(i);
+      if (this.state.grid[i]) {
+        this.select(i);
+        this.opts.tapSound?.();
+      }
     } else if (this.selected === i) {
       this.select(null);
     } else {
@@ -278,13 +289,29 @@ export class TableView {
 
   // ---------- rendering ----------
 
+  /** Empty slots are keyboard targets (move a tile into a hole); filled slots delegate to their tile. */
+  private setEmpty(i: number, empty: boolean): void {
+    const slot = this.slotEls[i];
+    if (!slot) return;
+    slot.classList.toggle('empty', empty);
+    if (empty) {
+      slot.setAttribute('tabindex', '0');
+      slot.setAttribute('role', 'button');
+      slot.setAttribute('aria-label', 'Spazio vuoto');
+    } else {
+      slot.removeAttribute('tabindex');
+      slot.removeAttribute('role');
+      slot.removeAttribute('aria-label');
+    }
+  }
+
   /** Brings the DOM in line with `state` without animation. */
   reconcile(state: GameState): void {
     this.state = state;
     const keep = new Set<TileId>();
     state.grid.forEach((id, i) => {
       const slot = this.slotEls[i] as HTMLElement;
-      slot.classList.toggle('empty', !id);
+      this.setEmpty(i, !id);
       if (id) {
         keep.add(id);
         const el = this.tileEl(id);
@@ -310,7 +337,14 @@ export class TableView {
 
   private updateHud(state: GameState, pileCounts = state.piles.map((p) => p.length)): void {
     this.solvedEl.textContent = `📸 ${state.solved.length} / ${state.photoIds.length}`;
+    this.solvedEl.setAttribute(
+      'aria-label',
+      `Foto risolte: ${state.solved.length} di ${state.photoIds.length}`,
+    );
+    this.solvedEl.title = 'Foto risolte';
     this.movesEl.textContent = `👣 ${state.moves}`;
+    this.movesEl.setAttribute('aria-label', `Mosse: ${state.moves}`);
+    this.movesEl.title = 'Mosse';
     pileCounts.forEach((n, i) => {
       const pile = this.pileEls[i] as HTMLElement;
       pile.classList.toggle('empty', n === 0);
@@ -334,8 +368,8 @@ export class TableView {
           const firstD = displaced?.getBoundingClientRect();
           (this.slotEls[e.to] as HTMLElement).append(moved);
           if (displaced) (this.slotEls[e.from] as HTMLElement).append(displaced);
-          this.slotEls[e.from]?.classList.toggle('empty', !displaced);
-          this.slotEls[e.to]?.classList.remove('empty');
+          this.setEmpty(e.from, !displaced);
+          this.setEmpty(e.to, false);
           flipFrom(moved, first, 220);
           if (displaced && firstD) flipFrom(displaced, firstD, 260);
           break;
@@ -345,7 +379,7 @@ export class TableView {
           const el = this.tileEl(e.tileId);
           const first = el.getBoundingClientRect();
           this.traySlots[e.to].append(el);
-          this.slotEls[e.from]?.classList.add('empty');
+          this.setEmpty(e.from, true);
           flipFrom(el, first);
           break;
         }
@@ -355,7 +389,7 @@ export class TableView {
           const el = this.tileEl(e.tileId);
           const first = el.getBoundingClientRect();
           (this.slotEls[e.to] as HTMLElement).append(el);
-          this.slotEls[e.to]?.classList.remove('empty');
+          this.setEmpty(e.to, false);
           flipFrom(el, first);
           break;
         }
@@ -369,7 +403,7 @@ export class TableView {
           const el = this.tileEl(e.tileId);
           const first = (this.pileEls[e.pile] as HTMLElement).getBoundingClientRect();
           (this.slotEls[e.to] as HTMLElement).append(el);
-          this.slotEls[e.to]?.classList.remove('empty');
+          this.setEmpty(e.to, false);
           prevPiles[e.pile] = (prevPiles[e.pile] ?? 1) - 1;
           this.updateHud(next, prevPiles);
           sfx('deal');
@@ -456,7 +490,7 @@ export class TableView {
     );
     for (const i of slots) {
       this.slotEls[i]?.replaceChildren();
-      this.slotEls[i]?.classList.add('empty');
+      this.setEmpty(i, true);
     }
     if (!slots.length) for (const q of QUADRANTS) this.traySlots[q]?.replaceChildren();
     this.trayEl?.classList.remove('merged');

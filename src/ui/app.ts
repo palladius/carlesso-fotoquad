@@ -134,7 +134,7 @@ export class App {
           return m;
         },
       },
-      { muted: this.d.audio.muted, photosById: this.sliced },
+      { muted: this.d.audio.muted, photosById: this.sliced, tapSound: () => this.d.audio.play('tap') },
     );
     this.d.root.replaceChildren(this.table.root);
     this.table.layout();

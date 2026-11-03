@@ -209,6 +209,45 @@ describe('grid mode table', () => {
     expect(el2.classList.contains('dragging')).toBe(false);
   });
 
+  it('HUD counters have accessible labels (FR-3)', async () => {
+    const app = makeApp();
+    await start(app, 'all');
+    expect($('.hud-solved').getAttribute('aria-label')).toBe('Foto risolte: 0 di 12');
+    expect($('.hud-moves').getAttribute('aria-label')).toBe('Mosse: 0');
+  });
+
+  it('selecting a tile or starting a drag gives immediate tap feedback (guidelines UX #2)', async () => {
+    const app = makeApp();
+    await start(app, 'all');
+    audio.play.mockClear();
+    tap(tileAt(2));
+    expect(audio.play).toHaveBeenCalledWith('tap');
+    tap(tileAt(2));
+    audio.play.mockClear();
+    document.elementsFromPoint = vi.fn(() => []);
+    pointer(tileAt(4), 'pointerdown', 0, 0);
+    pointer(tileAt(4), 'pointermove', 100, 100);
+    expect(audio.play).toHaveBeenCalledWith('tap');
+    pointer(tileAt(4), 'pointerup', 100, 100);
+  });
+
+  it('keyboard can move a tile into an empty slot (FR-4.1 / AC-5)', async () => {
+    const app = makeApp();
+    await start(app, 'gamberone'); // 12 tiles on a 15-slot tableau: 3 empty slots
+    const empty = $$('.slot.empty')[0] as HTMLElement;
+    expect(empty.getAttribute('tabindex')).toBe('0');
+    expect(empty.getAttribute('aria-label')).toBe('Spazio vuoto');
+    const to = Number(empty.dataset.slot);
+    const id = tileAt(0).dataset.tile;
+    tileAt(0).dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    empty.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    await flush();
+    expect(tileAt(to).dataset.tile).toBe(id);
+    expect(slotEl(0).classList.contains('empty')).toBe(true);
+    expect(slotEl(0).getAttribute('tabindex')).toBe('0');
+    expect(slotEl(to).hasAttribute('tabindex')).toBe(false);
+  });
+
   it('hint highlights the 4 tiles of a completable photo for ~3s', async () => {
     const app = makeApp();
     await start(app, 'all');
