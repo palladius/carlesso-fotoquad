@@ -44,9 +44,9 @@ Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.m
 - [x] Task: Photo manifest loader & packs (FR-1, FR-2) `f478385`
     - [x] Write tests: parse/validate manifest, merge optional private manifest (404 tolerated), skip broken entries, derive packs from tags, hide empty packs
     - [x] Implement `manifest.ts` and `packs.ts`
-- [ ] Task: Canvas slicer (FR-1)
-    - [ ] Write tests: quadrant geometry math (incl. 3:4 centre-crop for non-3:4 sources); pixel-colour check on a synthetic 4-colour image (Playwright/browser test where canvas is required)
-    - [ ] Implement `slicer.ts` (`createImageBitmap` / canvas), failed-image handling
+- [x] Task: Canvas slicer (FR-1) `88ffe1f`
+    - [x] Write tests: quadrant geometry math (incl. 3:4 centre-crop for non-3:4 sources); pixel-colour check on a synthetic 4-colour image (Playwright/browser test where canvas is required)
+    - [x] Implement `slicer.ts` (`createImageBitmap` / canvas), failed-image handling
 - [ ] Task: Storage (FR-8)
     - [ ] Write tests: save/load snapshot, unlocked album, records per pack, mute flag, corrupt/old data discarded
     - [ ] Implement `storage.ts` over `localStorage` (injectable for tests)
