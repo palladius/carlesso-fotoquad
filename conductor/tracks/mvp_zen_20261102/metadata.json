@@ -6,9 +6,9 @@
   "created_at": "2026-11-02T20:45:00+01:00",
   "updated_at": "2026-11-03T08:04:00+01:00",
   "convergence": {
-    "status": "GAPS_FOUND",
-    "pass": 1,
-    "gaps_count": 7,
+    "status": "CONVERGED",
+    "pass": 2,
+    "gaps_count": 0,
     "uat_archetype": "game",
     "uat_passed": true,
     "uat_evidence": [
@@ -16,6 +16,6 @@
       "docs/screenshots/mvp_zen_20261102-uat-match.png",
       "docs/screenshots/mvp_zen_20261102-uat.png"
     ],
-    "checked_at": "2026-11-03T07:04:31Z"
+    "checked_at": "2026-11-03T07:12:54Z"
   }
 }
