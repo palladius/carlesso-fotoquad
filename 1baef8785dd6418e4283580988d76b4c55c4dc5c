@@ -1,3 +1,7 @@
 Phase 7 checkpoint verification report
 
 Automated: vitest 109/109 (coverage 95.9%), Playwright 30 passed / 4 skipped by design on the production build (full games grid+tray, drag&drop, keyboard, resume, difficulty, offline PWA, manifest, responsive 360/390/1440, pixel-level slicer, axe WCAG A/AA 0 serious, cached load 20-24ms). Live UAT (scripts/uat.mjs, Difficile, real mouse drags): 3 photos solved, exactly 1 completable each deal, 0 console/HTTP errors. Manual: Riccardo + kids played on localhost and GitHub Pages (2026-11-03).
+
+Phase 8 checkpoint verification report
+
+Automated: vitest 109/109 (coverage 95.9%), Playwright 30 passed / 4 skipped by design on the production build (full games grid+tray, drag&drop, keyboard, resume, difficulty, offline PWA, manifest, responsive 360/390/1440, pixel-level slicer, axe WCAG A/AA 0 serious, cached load 20-24ms). Live UAT (scripts/uat.mjs, Difficile, real mouse drags): 3 photos solved, exactly 1 completable each deal, 0 console/HTTP errors. Manual: Riccardo + kids played on localhost and GitHub Pages (2026-11-03).
