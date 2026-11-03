@@ -29,3 +29,8 @@ async function boot(): Promise<void> {
 }
 
 void boot();
+
+// Offline-first PWA: precache app shell + photos (FR-10). Disabled in dev.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  void import('virtual:pwa-register').then(({ registerSW }) => registerSW({ immediate: true }));
+}

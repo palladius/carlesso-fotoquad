@@ -223,7 +223,7 @@ button:focus-visible {
   height: var(--pile-h);
   border-radius: 7px;
   background:
-    url('/card-back.png') center / cover,
+    url('/card-back.jpg') center / cover,
     repeating-linear-gradient(45deg, #2e57a8 0 6px, var(--card-blue) 6px 12px);
   border: 2px solid #fff;
   box-shadow:
