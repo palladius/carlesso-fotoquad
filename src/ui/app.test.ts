@@ -5,7 +5,11 @@ import { QUADRANTS, type Photo } from '../engine/types';
 import type { GameAudio, Sound } from '../platform/audio';
 import type { SlicedPhoto } from '../platform/slicer';
 import { createStorage } from '../platform/storage';
+import { createGame } from '../engine/game';
+import { reduce } from '../engine/reducer';
 import { App, optionsFor } from './app';
+import { victoryScreen } from './screens';
+import { TableView, TIMING } from './table';
 
 const PHOTOS: Photo[] = [
   ...['a', 'b', 'c'].map((id) => ({
@@ -439,6 +443,273 @@ describe('animations enabled', () => {
     expect($('.victory')).not.toBeNull();
     await flush();
     expect($('.confetti')).toBeNull(); // cleaned up
+    vi.restoreAllMocks();
+    delete (Element.prototype as { animate?: unknown }).animate;
+  });
+});
+
+describe('celebration popup (adversarially reviewed)', () => {
+  /** Swaps tiles of a completable photo; returns the still-pending dispatch of the swap that completes it. */
+  async function swapUntilMatch(app: App): Promise<{ done: Promise<void> }> {
+    const photo = completablePhotos(app.currentState!)[0] as string;
+    const targets = [0, 1, 5, 6];
+    for (let k = 0; k < 4; k++) {
+      const st = app.currentState!;
+      const from = st.grid.indexOf(tileId(photo, QUADRANTS[k] as (typeof QUADRANTS)[number]));
+      if (from === targets[k]) continue;
+      const action = { type: 'SWAP' as const, from, to: targets[k] as number, now: 2000 };
+      if (reduce(st, action).events.some((e) => e.type === 'matched')) return { done: app.dispatch(action) };
+      const p = app.dispatch(action);
+      await flush();
+      await p;
+    }
+    throw new Error('no match');
+  }
+  const popup = () => document.querySelector('.match-popup');
+  const winPointer = (type: string) => pointer(document.body, type);
+
+  it('auto-dismisses after HOLD_MS and announces the photo in a live region', async () => {
+    const app = makeApp(7, THREE);
+    await start(app, 'medio');
+    const { done: pending } = await swapUntilMatch(app);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(popup()).not.toBeNull();
+    expect(popup()?.getAttribute('aria-hidden')).toBe('true');
+    expect($('.sr-only[aria-live="polite"]').textContent).toMatch(/^Foto completata: Gamberone /);
+    await vi.advanceTimersByTimeAsync(TIMING.HOLD_MS - 20);
+    expect(popup()).not.toBeNull();
+    await vi.advanceTimersByTimeAsync(40);
+    expect(popup()).toBeNull();
+    await flush();
+    await pending;
+  });
+
+  it('one tap after the arm delay dismisses it at once and the board is playable again', async () => {
+    const app = makeApp(7, THREE);
+    await start(app, 'medio');
+    const { done: pending } = await swapUntilMatch(app);
+    await vi.advanceTimersByTimeAsync(TIMING.ARM_MS + 10);
+    winPointer('pointerdown');
+    winPointer('pointerup');
+    await vi.advanceTimersByTimeAsync(TIMING.FADE_DISMISS_MS + 5);
+    expect(popup()).toBeNull();
+    await vi.advanceTimersByTimeAsync(TIMING.DISCARD_MS + 50);
+    await pending;
+    const moves = app.currentState!.moves;
+    const p = app.dispatch({ type: 'SWAP', from: 10, to: 11 });
+    await flush();
+    await p;
+    expect(app.currentState!.moves).toBe(moves + 1);
+  });
+
+  it('ignores taps before the arm delay (the completing gesture cannot dismiss its own popup)', async () => {
+    const app = makeApp(7, THREE);
+    await start(app, 'medio');
+    const { done: pending } = await swapUntilMatch(app);
+    await vi.advanceTimersByTimeAsync(100);
+    winPointer('pointerdown');
+    await vi.advanceTimersByTimeAsync(10);
+    expect(popup()).not.toBeNull();
+    await flush();
+    await pending;
+  });
+
+  it('tray mode: the click that completes the photo does not dismiss it', async () => {
+    const app = makeApp(7, THREE);
+    await start(app, 'facile');
+    const photo = completablePhotos(app.currentState!)[0] as string;
+    for (const q of QUADRANTS) {
+      $(`.grid [data-tile="${tileId(photo, q)}"]`)?.click();
+      if (q !== 'BR') await flush();
+    }
+    await vi.advanceTimersByTimeAsync(TIMING.ARM_MS - 5);
+    expect(popup()).not.toBeNull();
+    await flush();
+  });
+
+  it('keyboard: repeat and Tab are ignored, Escape/Enter/Space dismiss after arming', async () => {
+    const app = makeApp(7, THREE);
+    await start(app, 'medio');
+    const { done: pending } = await swapUntilMatch(app);
+    await vi.advanceTimersByTimeAsync(TIMING.ARM_MS + 10);
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', repeat: true }));
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab' }));
+    await vi.advanceTimersByTimeAsync(5);
+    expect(popup()).not.toBeNull();
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    await vi.advanceTimersByTimeAsync(TIMING.FADE_DISMISS_MS + 5);
+    expect(popup()).toBeNull();
+    await flush();
+    await pending;
+  });
+
+  it('swallows the dismissing tap: it never reaches the HUD (no accidental Menu)', async () => {
+    const app = makeApp(7, THREE);
+    await start(app, 'medio');
+    const { done: pending } = await swapUntilMatch(app);
+    await vi.advanceTimersByTimeAsync(TIMING.ARM_MS + 10);
+    const menu = $('[aria-label="Menu"]');
+    pointer(menu, 'pointerdown');
+    pointer(menu, 'pointerup');
+    menu.click();
+    await flush();
+    await pending;
+    expect($('[data-level]')).toBeNull(); // still in the game
+    expect($('.grid')).not.toBeNull();
+  });
+
+  it('double dismiss is idempotent and leaves no timers or listeners behind', async () => {
+    const app = makeApp(7, THREE);
+    await start(app, 'medio');
+    const { done: pending } = await swapUntilMatch(app);
+    await vi.advanceTimersByTimeAsync(TIMING.ARM_MS + 10);
+    winPointer('pointerdown');
+    winPointer('pointerdown');
+    window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    winPointer('pointerup');
+    await flush();
+    await pending;
+    expect(vi.getTimerCount()).toBe(0);
+    expect(app.currentState!.solved).toHaveLength(1);
+    // a later Escape is not swallowed and does nothing
+    const ev = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true });
+    window.dispatchEvent(ev);
+    expect(ev.defaultPrevented).toBe(false);
+  });
+
+  it('leaving the game mid-celebration removes the popup and never shows a stale victory', async () => {
+    const app = makeApp(7, THREE);
+    await start(app, 'medio');
+    await solveOne(app);
+    await solveOne(app);
+    const { done: pending } = await swapUntilMatch(app); // last photo → victory would follow
+    await vi.advanceTimersByTimeAsync(10);
+    expect(popup()).not.toBeNull();
+    app.showStart();
+    expect(popup()).toBeNull();
+    await flush();
+    await pending;
+    expect($('.victory')).toBeNull();
+    expect($('[data-level]')).not.toBeNull();
+  });
+
+  it('victory buttons ignore clicks for the first 400ms (a held finger cannot press them)', async () => {
+    const onAgain = vi.fn();
+    const el = victoryScreen({
+      photos: 3,
+      moves: 9,
+      hints: 0,
+      durationMs: 1000,
+      newRecord: false,
+      onAgain,
+      onAlbum: vi.fn(),
+      onMenu: vi.fn(),
+    });
+    document.body.append(el);
+    const again = [...el.querySelectorAll('button')].find((b) => b.textContent?.includes('Gioca ancora'))!;
+    again.click();
+    expect(onAgain).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(TIMING.VICTORY_GUARD_MS + 1);
+    again.click();
+    expect(onAgain).toHaveBeenCalledTimes(1);
+  });
+
+  it('several matches in one move: a tap skips the remaining popups too (hurry mode)', async () => {
+    const lib = PHOTOS.slice(0, 3);
+    const sliced = new Map((await fakeSlice(lib)).map((s) => [s.photo.id, s]));
+    const state = createGame(lib, 3);
+    const table = new TableView(
+      state,
+      {
+        onSwap: vi.fn(),
+        onGridTap: vi.fn(),
+        onTrayTap: vi.fn(),
+        onHint: vi.fn(),
+        onAlbum: vi.fn(),
+        onMenu: vi.fn(),
+        onToggleMute: () => false,
+      },
+      { muted: true, photosById: sliced },
+    );
+    root.replaceChildren(table.root);
+    const ids = (slots: number[]) => slots.map((i) => state.grid[i] as string);
+    const next = structuredClone(state);
+    for (const i of [0, 1, 5, 6, 2, 3, 7, 8]) next.grid[i] = null;
+    const play = table.play(
+      [
+        { type: 'matched', photoId: 'a', tileIds: ids([0, 1, 5, 6]), slots: [0, 1, 5, 6] },
+        { type: 'matched', photoId: 'b', tileIds: ids([2, 3, 7, 8]), slots: [2, 3, 7, 8] },
+      ],
+      next,
+      () => {},
+    );
+    await vi.advanceTimersByTimeAsync(TIMING.ARM_MS + 10);
+    expect($('.sr-only[aria-live]').textContent).toContain('Gamberone a');
+    winPointer('pointerdown');
+    winPointer('pointerup');
+    await flush();
+    await play;
+    expect($('.sr-only[aria-live]').textContent).toContain('Gamberone a'); // b's popup was skipped
+    expect(document.querySelector('.match-popup')).toBeNull();
+    expect(table.busy).toBe(false);
+    table.destroy();
+  });
+
+  it('keyboard players get focus back on the board after the discard', async () => {
+    const app = makeApp(7, THREE);
+    await start(app, 'medio');
+    const photo = completablePhotos(app.currentState!)[0] as string;
+    const targets = [0, 1, 5, 6];
+    for (let k = 0; k < 4; k++) {
+      const from = app.currentState!.grid.indexOf(tileId(photo, QUADRANTS[k] as (typeof QUADRANTS)[number]));
+      if (from === targets[k]) continue;
+      tileAt(from).dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      const target = slotEl(targets[k] as number);
+      const key = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
+      (target.querySelector('.tile') ?? target).dispatchEvent(key);
+      await flush();
+    }
+    expect(app.currentState!.solved).toContain(photo);
+    expect(document.activeElement).not.toBe(document.body);
+    expect(slotEl(0).contains(document.activeElement)).toBe(true);
+  });
+
+  it('with animations: dismissing removes the confetti at once and cuts a running intro short', async () => {
+    window.matchMedia = (() => ({ matches: false })) as unknown as typeof window.matchMedia;
+    const finish = vi.fn();
+    Element.prototype.animate = vi.fn(function (this: Element) {
+      // the photo's intro never finishes by itself (simulates a long intro); other animations end at once
+      const isIntro = this.tagName === 'FIGURE';
+      return {
+        finished: isIntro ? new Promise(() => {}) : Promise.resolve(),
+        playState: isIntro ? 'running' : 'finished',
+        finish,
+      } as unknown as Animation;
+    });
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
+      left: 10,
+      top: 10,
+      width: 60,
+      height: 80,
+      right: 70,
+      bottom: 90,
+      x: 10,
+      y: 10,
+      toJSON: () => ({}),
+    } as DOMRect);
+    const app = makeApp(7, THREE);
+    await start(app, 'medio');
+    const { done } = await swapUntilMatch(app);
+    await vi.advanceTimersByTimeAsync(TIMING.PRE_MS + TIMING.ARM_MS + 10);
+    expect(document.querySelector('.confetti')).not.toBeNull();
+    winPointer('pointerdown');
+    winPointer('pointerup');
+    await vi.advanceTimersByTimeAsync(5);
+    expect(finish).toHaveBeenCalled();
+    expect(document.querySelector('.confetti')).toBeNull();
+    await flush();
+    await done;
+    expect(document.querySelector('.match-popup')).toBeNull();
     vi.restoreAllMocks();
     delete (Element.prototype as { animate?: unknown }).animate;
   });

@@ -24,8 +24,8 @@ export function moveWithFlip(el: HTMLElement, parent: HTMLElement, duration?: nu
 const COLORS = ['#f4c542', '#e8734a', '#5aa9e6', '#7bd389', '#f28dc3', '#ffffff'];
 
 /** Micro-confetti burst from a point (skipped with reduced motion). */
-export function confetti(x: number, y: number, count = 70): void {
-  if (reducedMotion() || typeof document.body.animate !== 'function') return;
+export function confetti(x: number, y: number, count = 70): HTMLElement | null {
+  if (reducedMotion() || typeof document.body.animate !== 'function') return null;
   const layer = h('div', { class: 'confetti', 'aria-hidden': 'true' });
   document.body.append(layer);
   for (let i = 0; i < count; i++) {
@@ -47,4 +47,5 @@ export function confetti(x: number, y: number, count = 70): void {
     );
   }
   setTimeout(() => layer.remove(), 2200);
+  return layer;
 }

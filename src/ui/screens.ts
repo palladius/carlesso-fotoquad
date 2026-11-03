@@ -3,6 +3,9 @@ import type { Difficulty } from '../platform/storage';
 import { h } from './dom';
 import { confetti } from './fx';
 
+/** Must match TIMING.VICTORY_GUARD_MS in table.ts. */
+export const VICTORY_GUARD_MS = 400;
+
 export interface StartScreenProps {
   records: Record<Difficulty, number | null>;
   resume: { level: Difficulty; solved: number; total: number } | null;
@@ -78,6 +81,11 @@ function fmtDuration(ms: number): string {
 }
 
 export function victoryScreen(p: VictoryProps): HTMLElement {
+  // A finger still down from the last celebration must not press a button the player never saw.
+  const mountedAt = Date.now();
+  const guard = (fn: () => void) => () => {
+    if (Date.now() - mountedAt >= VICTORY_GUARD_MS) fn();
+  };
   const el = h(
     'div',
     { class: 'overlay victory', role: 'dialog', 'aria-label': 'Vittoria' },
@@ -100,17 +108,17 @@ export function victoryScreen(p: VictoryProps): HTMLElement {
       ),
       h(
         'button',
-        { class: 'big-btn', onclick: () => p.onAgain() },
+        { class: 'big-btn', onclick: guard(() => p.onAgain()) },
         h('span', { class: 'label', text: '🔄 Gioca ancora' }),
       ),
       h(
         'button',
-        { class: 'big-btn', onclick: () => p.onAlbum() },
+        { class: 'big-btn', onclick: guard(() => p.onAlbum()) },
         h('span', { class: 'label', text: "📖 Sfoglia l'Album" }),
       ),
       h(
         'button',
-        { class: 'big-btn ghost', onclick: () => p.onMenu() },
+        { class: 'big-btn ghost', onclick: guard(() => p.onMenu()) },
         h('span', { class: 'label', text: '🏠 Menu' }),
       ),
     ),

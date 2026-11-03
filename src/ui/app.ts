@@ -163,7 +163,9 @@ export class App {
     const won = events.find((e) => e.type === 'won');
     if (won) this.d.storage.clearGame();
     else this.d.storage.saveGame(this.level, state);
-    await this.table.play(events, state, (s) => this.d.audio.play(s));
+    const table = this.table;
+    await table.play(events, state, (s) => this.d.audio.play(s));
+    if (this.table !== table) return; // the player left the game during the animation
     if (won && won.type === 'won') {
       this.d.audio.play('victory');
       const newRecord = this.d.storage.submitRecord(this.level, won.moves);

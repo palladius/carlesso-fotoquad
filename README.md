@@ -13,11 +13,17 @@ a chime, the pieces are discarded and 4 new tiles are dealt. Keep going until ev
 
 ## Levels
 
-| Level | How it plays | Doable photos on the table |
-|---|---|---|
-| 🐣 **Facile** | tap a tile → it flies to its slot in a 2×2 tray (great for little ones) | several |
-| 🙂 **Medio** | drag tiles **inside the board** (or tap-tap) until the 4 pieces form their 2×2 block | 1–3 |
-| 🧠 **Difficile** | same, but the dealer guarantees **exactly one** doable photo | 1 |
+The start screen has just three buttons — the game picks the photos itself and **rotates** them
+(least-recently-played first), so every game feels new.
+
+| Level | How it plays | Photos per game | Doable photos on the table |
+|---|---|---|---|
+| 🐣 **Facile** | tap a tile → it flies to its slot in a 2×2 tray (great for little ones) | 6 | several |
+| 🙂 **Medio** | drag tiles **inside the board** (or tap-tap) until the 4 pieces form their 2×2 block | 16 | 1–3 |
+| 🧠 **Difficile** | same, but the dealer guarantees **exactly one** doable photo | 24 | 1 |
+
+Medio and Difficile deliberately **overflow** the 30-slot board: the extra tiles wait in the decks, which is what
+makes the game interesting. After a completed photo the celebration lasts ~2s; **one tap anywhere skips it**.
 
 The "exactly one" rule holds as long as the maths allows it: with few photos left, more become doable. Packs with
 ≥ 15 photos keep the challenge for most of the game.
@@ -41,9 +47,15 @@ and a manifest `public/photos/private/photos.json` (same format as [`public/phot
 ```
 
 - Any aspect ratio works: photos are centre-cropped to 3:4 portrait and sliced in the browser — no Photoshop.
-- Tags drive the packs: `ale`/`sebi` → 👦👦 I Bimbi, `viaggi`/`vacanze` → 🏖️ Vacanze & Viaggi,
-  `gamberone`/`dreamworks` → 🦐 Gamberone & Dreamworks; everything → 📚 Tutto l'Archivio.
+- Private photos join the rotation together with the 26 demo illustrations.
 - Private photos are only available in your local build (`just dev` / `just build`), never on GitHub Pages.
+
+### From Immich (Riccardo's self-hosted photos)
+
+On `pupurabbux`, Immich's CLIP smart search finds good candidates (e.g. *"two young brothers smiling together
+outdoors"*, *"children skiing in the snow"*); download the `preview` rendition of the chosen assets into
+`public/photos/private/` and list them in its `photos.json` (tags `ale`, `sebi`, `vere`). Avoid photos with other
+people's children or in swimwear.
 
 ## Development
 

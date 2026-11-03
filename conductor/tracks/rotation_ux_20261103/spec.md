@@ -41,7 +41,25 @@ dismissible with one tap.
   on drums and Seby on piano, pirates, Halloween, Gamberone rock star/surfer, …) → 26 public demo photos.
 
 ### FR-7 Snappy, dismissible celebration
-- *(Detailed in §2.1 after the adversarial review.)* Shorter automatic celebration; one tap/key dismisses it.
+- Shorter automatic celebration; one tap/key dismisses it. Hardened by an adversarial review — see §2.1.
+
+### 2.1 Celebration — hardened spec (adversarial review, 2026-11-03)
+An adversarial reviewer agent attacked the first proposal ("auto-hide after 1.2s, any tap dismisses") and found
+ghost-dismiss, ghost-click-through and victory-screen hazards. Final rules (constants in `src/ui/table.ts` `TIMING`):
+- **Timings:** PRE 150ms → INTRO 320ms → **HOLD 1400ms** → FADE 180ms → DISCARD 250ms → deal stagger 70ms.
+  Auto path match → playable ≈ 2.6s (was ≈ 3.7s); skipping ≈ 0.85s.
+- **Dismiss:** any primary pointerdown anywhere (photo included — kids tap what they look at) or Enter/Space/Escape,
+  only after **ARM 350ms** from the popup appearing, so the gesture that completed the photo can't dismiss it.
+  Listeners are attached in the next task; `e.repeat` and Tab are ignored; idempotent.
+- **No ghost clicks:** the popup is a full-screen shield (`pointer-events:auto`, `touch-action:none`); it stays until
+  the dismissing finger lifts (≤ 600ms) and the following `click` is swallowed (500ms). Victory buttons ignore
+  clicks for 400ms after mounting.
+- **Hurry mode:** after a dismiss, the rest of the move is fast-forwarded (further popups in the same move skipped,
+  deal stagger 0); the confetti layer is removed.
+- **Robustness:** AbortController cleans up listeners/timers; leaving the game mid-celebration removes the popup and
+  never shows a stale victory screen.
+- **Accessibility:** popup is `aria-hidden`; a persistent polite live region announces "Foto completata: …";
+  keyboard players get focus restored on the board after the discard; reduced motion keeps the same HOLD.
 
 ## 3. Non-Functional
 - Same quality gates as the MVP: TDD, ≥ 80% coverage, e2e on the production build, axe 0 serious violations.

@@ -6,6 +6,26 @@ import { h, reducedMotion, sleep } from './dom';
 import { confetti, flipFrom } from './fx';
 import { computeTileSize } from './layout';
 
+/**
+ * Celebration timings (track rotation_ux_20261103, adversarially reviewed).
+ * Auto path match → playable ≈ 2.6s (was ≈ 3.7s); a tap after ARM_MS skips it in ≈ 0.85s.
+ */
+export const TIMING = {
+  PRE_MS: 150, // pause after the completing move (motion only)
+  INTRO_MS: 320, // photo flies from the board into the popup
+  HOLD_MS: 1400, // time the photo stays up after the intro: recognise the face, read the caption
+  ARM_MS: 350, // taps before this (from popup append) are ignored: the completing gesture can't dismiss it
+  FADE_MS: 180,
+  FADE_DISMISS_MS: 100,
+  DISCARD_MS: 250,
+  DEAL_STAGGER_MS: 70,
+  SWALLOW_MS: 500, // the click that follows a dismissing tap is swallowed
+  POINTERUP_CAP_MS: 600, // keep the popup (shield) until the dismissing finger lifts, at most this long
+  VICTORY_GUARD_MS: 400,
+} as const;
+
+const DISMISS_KEYS = new Set(['Enter', ' ', 'Escape']);
+
 const Q_LABEL: Record<Quadrant, string> = {
   TL: 'alto sinistra',
   TR: 'alto destra',
@@ -61,6 +81,14 @@ export class TableView {
   /** Visual rect of the tile just dropped, so the swap animation starts where the finger left it. */
   private dropRect: { id: TileId; rect: DOMRect } | null = null;
   private onResize = () => this.layout();
+  private readonly liveEl: HTMLElement;
+  /** Set when the player skips a celebration: the rest of the current move is fast-forwarded. */
+  private hurry = false;
+  private celebration: AbortController | null = null;
+  /** Keyboard players get focus restored on the board after tiles are discarded. */
+  private keyboardInput = false;
+  private popupEl: HTMLElement | null = null;
+  private confettiEl: HTMLElement | null = null;
   busy = false;
 
   constructor(
@@ -69,7 +97,7 @@ export class TableView {
     private readonly opts: TableOptions,
   ) {
     this.trayMode = state.options.mode === 'tray';
-    const piles = h('div', { class: 'piles', 'aria-label': 'Mazzi di pesca' });
+    const piles = h('div', { class: 'piles', role: 'group', 'aria-label': 'Mazzi di pesca' });
     for (let i = 0; i < state.options.piles; i++) {
       const count = h('span', { class: 'pile-count' });
       this.pileCountEls.push(count);
@@ -87,6 +115,7 @@ export class TableView {
       slot.addEventListener('keydown', (e) => {
         if (slot.firstElementChild || (e.key !== 'Enter' && e.key !== ' ')) return;
         e.preventDefault();
+        this.keyboardInput = true;
         this.tapSlot(i);
       });
       this.slotEls.push(slot);
@@ -101,8 +130,9 @@ export class TableView {
         ...QUADRANTS.map((q) => this.traySlots[q]),
       );
     }
-    this.solvedEl = h('span', { class: 'hud-solved' });
-    this.movesEl = h('span', { class: 'hud-moves' });
+    // role=img: a counter with an accessible name (aria-label is not allowed on a bare span)
+    this.solvedEl = h('span', { class: 'hud-solved', role: 'img' });
+    this.movesEl = h('span', { class: 'hud-moves', role: 'img' });
     const muteBtn = h('button', {
       class: 'hud-btn',
       'aria-label': 'Audio',
@@ -134,13 +164,25 @@ export class TableView {
       this.albumBtn,
       muteBtn,
     );
-    this.root = h('main', { class: `table mode-${state.options.mode}` }, piles, grid, this.trayEl, hud);
+    this.liveEl = h('div', { class: 'sr-only', 'aria-live': 'polite' });
+    this.root = h(
+      'main',
+      { class: `table mode-${state.options.mode}` },
+      piles,
+      grid,
+      this.trayEl,
+      hud,
+      this.liveEl,
+    );
     this.reconcile(state);
     window.addEventListener('resize', this.onResize);
     this.layout();
   }
 
   destroy(): void {
+    this.celebration?.abort();
+    this.popupEl?.remove();
+    this.confettiEl?.remove();
     window.removeEventListener('resize', this.onResize);
     clearTimeout(this.hintTimer);
     this.root.remove();
@@ -178,6 +220,7 @@ export class TableView {
         if (this.trayMode) return; // native button click handles Enter/Space
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
+          this.keyboardInput = true;
           this.tapSlot(this.state.grid.indexOf(id));
         }
       });
@@ -187,6 +230,7 @@ export class TableView {
   }
 
   private onPointerDown(e: PointerEvent, id: TileId, el: HTMLElement): void {
+    this.keyboardInput = false;
     if (this.busy || e.button > 0 || this.trayMode) return;
     const from = this.state.grid.indexOf(id);
     if (from < 0) return;
@@ -370,6 +414,8 @@ export class TableView {
   async play(events: GameEvent[], next: GameState, sfx: Sfx): Promise<void> {
     const prevPiles = this.state.piles.map((p) => p.length);
     this.state = next;
+    this.hurry = false;
+    let vacated: number | null = null;
     for (const e of events) {
       switch (e.type) {
         case 'swapped': {
@@ -406,12 +452,18 @@ export class TableView {
           flipFrom(el, first);
           break;
         }
-        case 'matched':
+        case 'matched': {
           this.busy = true;
           this.clearHint();
-          if (!reducedMotion()) await sleep(260);
-          await this.celebrate(e.photoId, e.slots, sfx);
+          const tiles = this.markSolved(e.slots, sfx);
+          vacated ??= e.slots[0] ?? null;
+          if (!this.hurry) {
+            if (!reducedMotion()) await sleep(TIMING.PRE_MS);
+            await this.celebrate(e.photoId, tiles);
+          }
+          await this.discard(e.slots, tiles);
           break;
+        }
         case 'dealt': {
           const el = this.tileEl(e.tileId);
           const first = at(this.pileEls, e.pile).getBoundingClientRect();
@@ -421,7 +473,7 @@ export class TableView {
           this.updateHud(next, prevPiles);
           sfx('deal');
           flipFrom(el, first, 420);
-          if (!reducedMotion()) await sleep(110);
+          if (!reducedMotion() && !this.hurry) await sleep(TIMING.DEAL_STAGGER_MS);
           break;
         }
         case 'hint':
@@ -433,33 +485,121 @@ export class TableView {
     }
     this.reconcile(next);
     this.busy = false;
+    const active = document.activeElement;
+    if (this.keyboardInput && vacated !== null && (!active || active === document.body)) {
+      const slot = this.slot(vacated);
+      (this.tileIn(slot) ?? slot).focus();
+    }
   }
 
-  private async celebrate(photoId: string, slots: number[], sfx: Sfx): Promise<void> {
-    const sliced = this.opts.photosById.get(photoId);
-    const motion = !reducedMotion();
-    const blockTiles = slots.length
+  private markSolved(slots: number[], sfx: Sfx): (HTMLElement | null)[] {
+    const tiles = slots.length
       ? slots.map((i) => this.tileIn(this.slotEls[i]))
       : QUADRANTS.map((q) => this.tileIn(this.traySlots[q]));
-    for (const t of blockTiles) t?.classList.add('solved');
+    for (const t of tiles) t?.classList.add('solved');
     this.trayEl?.classList.toggle('merged', !slots.length);
     sfx('match');
-    const first = blockTiles[0]?.getBoundingClientRect();
+    return tiles;
+  }
+
+  /**
+   * Shows the completed photo. Auto-hides after INTRO + HOLD; one tap (anywhere) or Enter/Space/Escape
+   * dismisses it once armed. The dismissing gesture is swallowed so it can't hit the board, HUD or victory screen.
+   */
+  private async celebrate(photoId: string, tiles: (HTMLElement | null)[]): Promise<void> {
+    const sliced = this.opts.photosById.get(photoId);
+    const motion = !reducedMotion();
+    const caption = sliced
+      ? `${sliced.photo.title}${sliced.photo.year ? ` · ${sliced.photo.year}` : ''}`
+      : '';
+    const ac = new AbortController();
+    const { signal } = ac;
+    this.celebration = ac;
+    const first = tiles[0]?.getBoundingClientRect();
     const fig = h(
       'figure',
       {},
-      sliced ? h('img', { src: sliced.full, alt: sliced.photo.title }) : null,
-      h('figcaption', {
-        text: sliced ? `${sliced.photo.title}${sliced.photo.year ? ` · ${sliced.photo.year}` : ''}` : '',
-      }),
+      sliced ? h('img', { src: sliced.full, alt: '' }) : null,
+      h('figcaption', { text: caption }),
     );
-    const popup = h('div', { class: 'match-popup', role: 'status' }, fig);
+    const popup = h('div', { class: 'match-popup', 'aria-hidden': 'true' }, fig);
+    this.popupEl = popup;
     document.body.append(popup);
-    confetti(window.innerWidth / 2, window.innerHeight / 2);
-    if (motion && first) {
-      const r = fig.getBoundingClientRect();
-      await fig
-        .animate(
+    this.liveEl.textContent = `Foto completata: ${caption}`;
+    this.confettiEl = confetti(window.innerWidth / 2, window.innerHeight / 2);
+
+    const armedAt = Date.now() + TIMING.ARM_MS;
+    let dismissed = false;
+    let downPointer: number | null = null;
+    let resolveDismiss: () => void = () => {};
+    let resolvePointerUp: () => void = () => {};
+    const dismissedP = new Promise<void>((res) => (resolveDismiss = res));
+    const pointerUpP = new Promise<void>((res) => (resolvePointerUp = res));
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    const wait = (ms: number) => new Promise<void>((res) => timers.push(setTimeout(res, ms)));
+    const dismiss = () => {
+      if (dismissed) return;
+      dismissed = true;
+      this.hurry = true;
+      resolveDismiss();
+    };
+    signal.addEventListener('abort', () => {
+      dismissed = true;
+      resolveDismiss();
+      resolvePointerUp();
+    });
+    const swallowClickOnce = () => {
+      const swallow = (e: Event) => {
+        e.stopPropagation();
+        e.preventDefault();
+      };
+      window.addEventListener('click', swallow, { capture: true, once: true });
+      setTimeout(() => window.removeEventListener('click', swallow, { capture: true }), TIMING.SWALLOW_MS);
+    };
+    // Listen from the next task on, so the event that completed the photo can't reach these listeners.
+    timers.push(
+      setTimeout(() => {
+        if (signal.aborted) return;
+        const opts = { capture: true, signal };
+        window.addEventListener(
+          'pointerdown',
+          (e) => {
+            if (Date.now() < armedAt || e.isPrimary === false || e.button > 0) return;
+            e.preventDefault();
+            e.stopPropagation();
+            if (dismissed) return;
+            downPointer = e.pointerId ?? 1;
+            swallowClickOnce();
+            dismiss();
+          },
+          opts,
+        );
+        const lift = (e: PointerEvent) => {
+          if (downPointer === null || (e.pointerId ?? 1) !== downPointer) return;
+          e.stopPropagation();
+          downPointer = null;
+          resolvePointerUp();
+        };
+        window.addEventListener('pointerup', lift, opts);
+        window.addEventListener('pointercancel', lift, opts);
+        window.addEventListener(
+          'keydown',
+          (e) => {
+            if (Date.now() < armedAt || e.repeat || !DISMISS_KEYS.has(e.key)) return;
+            e.preventDefault();
+            e.stopPropagation();
+            dismiss();
+          },
+          opts,
+        );
+      }, 0),
+    );
+
+    try {
+      let intro: Animation | null = null;
+      if (motion && first && typeof fig.animate === 'function') {
+        const r = fig.getBoundingClientRect();
+        intro = fig.animate(
           [
             {
               transform: `translate(${first.left - r.left}px, ${first.top - r.top}px) scale(${(first.width * 2) / r.width})`,
@@ -467,19 +607,50 @@ export class TableView {
             },
             { transform: 'rotate(-2deg)', opacity: 1 },
           ],
-          { duration: 420, easing: 'cubic-bezier(.2,.9,.3,1.15)' },
-        )
-        .finished.catch(() => undefined);
+          { duration: TIMING.INTRO_MS, easing: 'cubic-bezier(.2,.9,.3,1.15)' },
+        );
+      }
+      const introDone = intro
+        ? intro.finished.then(
+            () => undefined,
+            () => undefined,
+          )
+        : Promise.resolve();
+      await Promise.race([introDone.then(() => wait(TIMING.HOLD_MS)), dismissedP]);
+      if (dismissed && intro && intro.playState === 'running') {
+        try {
+          intro.finish();
+        } catch {
+          /* animation already gone */
+        }
+      }
+      if (signal.aborted) return;
+      if (motion && typeof popup.animate === 'function') {
+        await popup
+          .animate([{ opacity: 1 }, { opacity: 0 }], {
+            duration: dismissed ? TIMING.FADE_DISMISS_MS : TIMING.FADE_MS,
+            fill: 'forwards',
+          })
+          .finished.catch(() => undefined);
+      }
+      // keep the shield until the dismissing finger lifts, so pointerup/click can't land underneath
+      if (downPointer !== null) await Promise.race([pointerUpP, wait(TIMING.POINTERUP_CAP_MS)]);
+    } finally {
+      ac.abort();
+      for (const t of timers) clearTimeout(t);
+      popup.remove();
+      if (this.hurry) this.confettiEl?.remove();
+      if (this.popupEl === popup) this.popupEl = null;
+      if (this.celebration === ac) this.celebration = null;
     }
-    await sleep(1500);
-    if (motion)
-      await popup
-        .animate([{ opacity: 1 }, { opacity: 0 }], { duration: 240, fill: 'forwards' })
-        .finished.catch(() => undefined);
-    popup.remove();
+  }
+
+  /** The 4 tiles fly to the Album button and the slots are cleared. */
+  private async discard(slots: number[], tiles: (HTMLElement | null)[]): Promise<void> {
+    const motion = !reducedMotion();
     const target = this.albumBtn.getBoundingClientRect();
     await Promise.all(
-      blockTiles.map((el) => {
+      tiles.map((el) => {
         if (!el || !motion || typeof el.animate !== 'function') return Promise.resolve();
         const b = el.getBoundingClientRect();
         return el
@@ -491,7 +662,7 @@ export class TableView {
                 opacity: 0,
               },
             ],
-            { duration: 380, easing: 'ease-in', fill: 'forwards' },
+            { duration: TIMING.DISCARD_MS, easing: 'ease-in', fill: 'forwards' },
           )
           .finished.then(() => undefined)
           .catch(() => undefined);

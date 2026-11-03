@@ -516,8 +516,23 @@ button:focus-visible {
 }
 
 .match-popup {
-  pointer-events: none;
+  /* a full-screen shield: one tap anywhere (photo included) skips the celebration */
+  pointer-events: auto;
+  touch-action: none;
+  cursor: pointer;
   background: rgb(0 0 0 / 0.35);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .match-popup figure {
