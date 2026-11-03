@@ -61,11 +61,21 @@ describe('storage', () => {
     expect(createStorage(backing).difficulty()).toBe('medio');
   });
 
+  it('records play history as an increasing game counter (rotation)', () => {
+    const s = createStorage(backing);
+    expect(s.lastPlayed()).toEqual({});
+    s.markPlayed(['a', 'b']);
+    s.markPlayed(['b', 'c']);
+    expect(createStorage(backing).lastPlayed()).toEqual({ a: 1, b: 2, c: 2 });
+  });
+
   it('ignores garbage in the profile', () => {
     backing.setItem('fotoquad.profile.v1', '"string"');
     const s = createStorage(backing);
     expect(s.unlocked()).toEqual([]);
     expect(s.muted()).toBe(false);
+    backing.setItem('fotoquad.profile.v1', JSON.stringify({ lastPlayed: { a: 'x', b: 3 }, games: 'n' }));
+    expect(createStorage(backing).lastPlayed()).toEqual({ b: 3 });
   });
 
   it('survives a throwing storage (e.g. private mode quota)', () => {

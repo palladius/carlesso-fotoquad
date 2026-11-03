@@ -12,6 +12,9 @@ interface Profile {
   records: Record<string, number>;
   muted: boolean;
   difficulty: Difficulty;
+  /** Rotation history: photo id → game counter of its last appearance. */
+  lastPlayed: Record<string, number>;
+  games: number;
 }
 
 export interface SavedGame {
@@ -32,6 +35,9 @@ export interface GameStorage {
   setMuted(muted: boolean): void;
   difficulty(): Difficulty;
   setDifficulty(d: Difficulty): void;
+  lastPlayed(): Record<string, number>;
+  /** Records that a new game started with these photos. */
+  markPlayed(photoIds: readonly string[]): void;
 }
 
 /** FR-8: versioned localStorage persistence; never throws, discards corrupt data. */
@@ -52,7 +58,14 @@ export function createStorage(backing: Storage): GameStorage {
     }
   };
   const profile = (): Profile => {
-    const fresh: Profile = { unlocked: [], records: {}, muted: false, difficulty: 'medio' };
+    const fresh: Profile = {
+      unlocked: [],
+      records: {},
+      muted: false,
+      difficulty: 'medio',
+      lastPlayed: {},
+      games: 0,
+    };
     try {
       // cast: untrusted JSON; every field is re-validated below before use.
       const p = JSON.parse(read(PROFILE_KEY) ?? 'null') as Partial<Profile> | null;
@@ -62,6 +75,12 @@ export function createStorage(backing: Storage): GameStorage {
         records: p.records && typeof p.records === 'object' ? p.records : {},
         muted: p.muted === true,
         difficulty: DIFFICULTIES.find((d) => d === p.difficulty) ?? 'medio',
+        lastPlayed: Object.fromEntries(
+          Object.entries(p.lastPlayed && typeof p.lastPlayed === 'object' ? p.lastPlayed : {}).filter(
+            ([, v]) => typeof v === 'number',
+          ),
+        ),
+        games: typeof p.games === 'number' ? p.games : 0,
       };
     } catch {
       return fresh;
@@ -109,6 +128,13 @@ export function createStorage(backing: Storage): GameStorage {
       saveProfile(p);
     },
     difficulty: () => profile().difficulty,
+    lastPlayed: () => profile().lastPlayed,
+    markPlayed(ids) {
+      const p = profile();
+      p.games += 1;
+      for (const id of ids) p.lastPlayed[id] = p.games;
+      saveProfile(p);
+    },
     setDifficulty(d) {
       const p = profile();
       p.difficulty = d;
