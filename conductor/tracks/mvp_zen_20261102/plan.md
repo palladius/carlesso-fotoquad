@@ -61,7 +61,7 @@ Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.m
 - [x] Task: Card-back art (Gamberone shrimp pattern) and PWA icons (192, 512, maskable) `0875fae`
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `cc35f7b`
 
-## Phase 5: UI — Table & Core Loop
+## Phase 5: UI — Table & Core Loop [checkpoint: cc35f7b]
 - [x] Task: Start screen & pack selection `0875fae`
     - [x] Write tests (jsdom): renders available packs, starts game with chosen pack; "Continua" shown when a snapshot exists
     - [x] Implement start screen
@@ -76,7 +76,7 @@ Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.m
     - [x] Implement FLIP tile moves, refill cascade, match popup (~1.5s), confetti, discard-to-album
 - [x] Task: Hint button (FR-6) — highlight border + glow + pulse ~3s `0875fae`
 - [x] Task: Mute toggle & audio hooks on engine events `0875fae`
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `cc35f7b`
 
 ## Phase 5b: Gameplay Revision — in-grid drag & drop (user feedback 2026-11-03)
 - [x] Task: Engine — SWAP action, natural 2×2 block match detection, refill into vacated slots; remove tray (schema v2) `844aab1`
