@@ -30,10 +30,10 @@ Track: `rotation_ux_20261103` · Spec: [spec.md](./spec.md) · Workflow: [workfl
     - [x] Implement in `layout.ts`, `table.ts`, CSS
 
 ## Phase 3c: Landscape board (FR-9) & card back (FR-10)
-- [ ] Task: Piles/HUD columns in landscape grid mode; adaptive board shape chosen at game start
-    - [ ] Write tests: computeTileSize options, chooseBoardShape per viewport, dealer invariants on 8×4/7×4/6×5, app picks shape
-    - [ ] Implement; make e2e helpers shape-agnostic; settle() fallback for animations
-- [ ] Task: Family card back (Nano Banana), kids' hair colours fixed (Seby light brown/blond, Ale chestnut)
+- [x] Task: Piles/HUD columns in landscape grid mode; adaptive board shape chosen at game start `4fb5908`
+    - [x] Write tests: computeTileSize options, chooseBoardShape per viewport, dealer invariants on 8×4/7×4/6×5, app picks shape
+    - [x] Implement; make e2e helpers shape-agnostic; settle() fallback for animations
+- [x] Task: Family card back (Nano Banana), kids' hair colours fixed (Seby light brown/blond, Ale chestnut) `4fb5908`
 
 ## Phase 4: Content
 - [x] Task: 16 new demo illustrations + manifest entries (FR-6) `612b1fb`
