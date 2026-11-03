@@ -91,7 +91,7 @@ Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.m
 - [x] Task: Update e2e tests to the new mechanic `844aab1`
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `cc35f7b`
 
-## Phase 6: Victory, Album & Persistence UX
+## Phase 6: Victory, Album & Persistence UX [checkpoint: cc35f7b]
 - [x] Task: Victory screen (FR-7) `0875fae`
     - [x] Write tests: shows stats, records updated, "Gioca ancora" resets game
     - [x] Implement Grand Finale with fireworks/confetti
@@ -99,7 +99,7 @@ Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.m
     - [x] Write tests: lists unlocked photos, navigation via arrows/keys/swipe
     - [x] Implement fullscreen album
 - [x] Task: Resume flow (FR-8) — reload mid-game restores exact state `0875fae`
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `cc35f7b`
 
 ## Phase 7: PWA, E2E & Release
 - [x] Task: PWA (FR-10) `cc35f7b`
