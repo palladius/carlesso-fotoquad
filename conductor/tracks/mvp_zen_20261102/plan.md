@@ -40,7 +40,7 @@ Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.m
     - [x] Implement versioned snapshot format
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `126a935`
 
-## Phase 3: Platform Adapters
+## Phase 3: Platform Adapters [checkpoint: e1397d4]
 - [x] Task: Photo manifest loader & packs (FR-1, FR-2) `f478385`
     - [x] Write tests: parse/validate manifest, merge optional private manifest (404 tolerated), skip broken entries, derive packs from tags, hide empty packs
     - [x] Implement `manifest.ts` and `packs.ts`
@@ -53,7 +53,7 @@ Track: `mvp_zen_20261102` · Spec: [spec.md](./spec.md) · Workflow: [workflow.m
 - [x] Task: Audio (FR-9) `e1397d4`
     - [x] Write tests with mocked `AudioContext`: unlock on gesture, mute suppresses playback
     - [x] Implement synthesised SFX: tap, land, match chime, victory jingle
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `e1397d4`
 
 ## Phase 4: Demo Assets
 - [ ] Task: Generate 10 portrait 3:4 demo photos with Nano Banana (stylised family scenes / Gamberone, no real faces) → `public/photos/demo/` (optimised WebP/JPEG)
