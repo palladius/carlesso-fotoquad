@@ -1,0 +1,1 @@
+e2e/slicer.spec.ts: routed manifest with synthetic SVGs (portrait 300x400 and wide 1600x400); asserts every tile's centre and corner pixel equals its quadrant colour and tiles are 3:4 after centre-crop. Passes on mobile+desktop projects.
