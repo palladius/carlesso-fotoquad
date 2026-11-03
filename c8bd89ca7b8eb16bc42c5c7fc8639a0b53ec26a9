@@ -1,0 +1,1 @@
+Convergence pass 1 fixes F4 (empty slots focusable role=button 'Spazio vuoto', Enter/Space moves selected tile), F5 (tap sound on selection and drag start), F6 (aria-label/title 'Foto risolte: X di N', 'Mosse: M'), F7 (removed src/app.ts APP_NAME + smoke test; screenshot helper now solves via tap-tap). Tests written first (3 failing -> green). Unit 107 pass.
