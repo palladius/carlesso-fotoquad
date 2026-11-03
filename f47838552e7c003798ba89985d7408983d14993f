@@ -1,0 +1,3 @@
+Task: Photo manifest loader & packs
+
+src/platform/manifest.ts (validate, resolve src, merge private, tolerate 404/offline/non-JSON), src/platform/packs.ts (I Bimbi, Vacanze & Viaggi, Gamberone & Dreamworks, Tutto l'Archivio).
