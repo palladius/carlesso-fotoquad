@@ -26,7 +26,7 @@ completed picture is a memory (Ale & Seby at tennis camp, Zurich trams, holidays
 
 ## Core Loop
 1. N portrait photos → each auto-sliced client-side (Canvas) into TL / TR / BL / BR tiles → deck of N×4 tiles.
-2. Tiles are shuffled; 25–30 are visible on the tableau, the rest wait in 5 face-down decks.
+2. Tiles are shuffled onto a 28–32-slot tableau; the rest wait in 5 face-down decks.
 3. Player drags tiles within the tableau, swapping them, to rebuild a photo as an adjacent 2×2 block
    (TL TR / BL BR). Only one photo (Normale) or up to 3 (Facile) is completable at any time.
 4. When the 4 quadrants of the same photo form their 2×2 block: a celebratory popup shows the full photo
@@ -36,8 +36,11 @@ completed picture is a memory (Ale & Seby at tennis camp, Zurich trams, holidays
 
 ## Key Features
 - Client-side auto-slicing from a simple `photos.json` manifest.
-- Themed packs / album filters ("I Bimbi", "Vacanze & Viaggi", "Gamberone & Dreamworks", "Tutto l'Archivio").
-- Game modes: **Zen** (default, no timer, hint button), **Shuffle / Pesca Tattica**, **Party** (3-min timer + combos).
+- Three levels from a three-button start: 🐣 Facile (tap-to-tray, 6 photos), 🙂 Medio (drag & drop, 16 photos,
+  ≤ 3 doable), 🧠 Difficile (24 photos, exactly 1 doable); hint button in every level.
+- The game picks and rotates photos (least-recently-played first); Medio/Difficile overflow the board on purpose.
+- Adaptive board (5×6 on phones, 8×4 / 7×4 on wide screens), snappy tap-to-skip celebration, family card back.
+- Future ideas (not built): Party mode (3-min timer + combos), Shuffle / Pesca Tattica.
 - Persistent progress (`localStorage`): unlocked album, records, resume in-progress game.
 - Installable PWA, fully offline (code + images cached by a Service Worker).
 
