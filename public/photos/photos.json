@@ -222,5 +222,12 @@
     "title": "Ale e Seby a Hogwarts",
     "year": 2026,
     "tags": ["ale", "sebi", "halloween"]
+  },
+  {
+    "id": "tandem_school",
+    "src": "demo/tandem_school.jpg",
+    "title": "Ale e Seby a Tandem",
+    "year": 2026,
+    "tags": ["ale", "sebi", "scuola"]
   }
 ]
