@@ -1,0 +1,4 @@
+{
+  "theme": { "src": "theme.mp3", "loopStart": 0, "loopEnd": 150, "crossfade": 4, "gain": 0.25 },
+  "victory": { "src": "victory.mp3", "gain": 0.4 }
+}
