@@ -35,7 +35,7 @@ Track: `rotation_ux_20261103` · Spec: [spec.md](./spec.md) · Workflow: [workfl
     - [x] Implement; make e2e helpers shape-agnostic; settle() fallback for animations
 - [x] Task: Family card back (Nano Banana), kids' hair colours fixed (Seby light brown/blond, Ale chestnut) `4fb5908`
 
-## Phase 4: Content
+## Phase 4: Content [checkpoint: 8f6c248]
 - [x] Task: 16 new demo illustrations + manifest entries (FR-6) `612b1fb`
 - [x] Task: Real private photos pipeline documented (Immich → `public/photos/private/`) (FR-5) `76e965a`
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `8f6c248`
