@@ -11,12 +11,12 @@ Track: `rotation_ux_20261103` · Spec: [spec.md](./spec.md) · Workflow: [workfl
     - [x] Implement in `storage.ts`
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `8f6c248`
 
-## Phase 2: Simpler start screen
+## Phase 2: Simpler start screen [checkpoint: 8f6c248]
 - [x] Task: Start screen with 3 level buttons that start a game; small Continua + Album (FR-1) `15249a8`
     - [x] Write tests (jsdom): 3 buttons, tap starts a game with the level's photo count, Continua/Album
     - [x] Implement; remove packs UI and `packs.ts`
 - [x] Task: Update e2e tests to the new start flow `15249a8`
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `8f6c248`
 
 ## Phase 3: Snappy celebration (adversarially reviewed)
 - [x] Task: Dismissible, shorter celebration popup (FR-7, hardened spec §2.1) `76e965a`
