@@ -3,10 +3,10 @@
 Track: `music_lyria_20261104` · Spec: [spec.md](./spec.md) · Workflow: [workflow.md](../../workflow.md)
 
 ## Phase 1: Generate the music (offline, once)
-- [ ] Task: `scripts/generate-music.sh` wrapping the `musicgen-lyria3` skill (Pro 2-min theme + 30 s victory sting)
-    - [ ] Write the prompts (unresolved piano + strings, Jarre-like anticipation, no cadence/no ending) into the script
-    - [ ] Estimate cost/carbon; generate; save MP3 + metadata `.txt` under `public/music/`
-    - [ ] Optimise (96–128 kbps), listen-check, pick loop points; add `public/music/music.json` (src, loopStart, loopEnd, crossfade, gain)
+- [x] Task: `scripts/generate-music.sh` wrapping the `musicgen-lyria3` skill (Pro 2-min theme + 30 s victory sting) `1e4b0f2`
+    - [x] Write the prompts (unresolved piano + strings, Jarre-like anticipation, no cadence/no ending) into the script
+    - [x] Estimate cost/carbon; generate; save MP3 + metadata `.txt` under `public/music/`
+    - [x] Optimise (96–128 kbps), listen-check, pick loop points; add `public/music/music.json` (src, loopStart, loopEnd, crossfade, gain)
 - [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
 
 ## Phase 2: Music engine (TDD)
