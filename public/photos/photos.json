@@ -229,5 +229,12 @@
     "title": "Ale e Seby a Tandem",
     "year": 2026,
     "tags": ["ale", "sebi", "scuola"]
+  },
+  {
+    "id": "space_duel",
+    "src": "demo/space_duel.jpg",
+    "title": "Il duello: Jedi Ale contro mini Fener Seby",
+    "year": 2026,
+    "tags": ["ale", "sebi", "spazio"]
   }
 ]
