@@ -18,11 +18,11 @@ Track: `rotation_ux_20261103` · Spec: [spec.md](./spec.md) · Workflow: [workfl
 - [x] Task: Update e2e tests to the new start flow `15249a8`
 - [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `8f6c248`
 
-## Phase 3: Snappy celebration (adversarially reviewed)
+## Phase 3: Snappy celebration (adversarially reviewed) [checkpoint: 8f6c248]
 - [x] Task: Dismissible, shorter celebration popup (FR-7, hardened spec §2.1) `76e965a`
     - [x] Write unit + e2e tests from the adversarial review
     - [x] Implement
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `8f6c248`
 
 ## Phase 3b: Smarter Facile layout (FR-8)
 - [x] Task: Hide decks when the game doesn't overflow; landscape tray beside the grid `89959b0`
