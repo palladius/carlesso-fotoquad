@@ -2,14 +2,14 @@
 
 Track: `rotation_ux_20261103` · Spec: [spec.md](./spec.md) · Workflow: [workflow.md](../../workflow.md)
 
-## Phase 1: Photo selection & rotation
+## Phase 1: Photo selection & rotation [checkpoint: 8f6c248]
 - [x] Task: `selectPhotos(library, count, history, rng)` — least-recently-played first, random ties (FR-2, FR-3) `17db510`
     - [x] Write tests: count cap, LRU order, ties random but seeded, consecutive games minimise overlap
     - [x] Implement in `src/platform/rotation.ts`
 - [x] Task: Storage — `lastPlayed` history and per-level records (FR-3, FR-4) `17db510`
     - [x] Write tests: history persisted, game counter, records per level, garbage tolerated
     - [x] Implement in `storage.ts`
-- [ ] Task: Phase Verification & Checkpoint (Refer to workflow.md)
+- [x] Task: Phase Verification & Checkpoint (Refer to workflow.md) `8f6c248`
 
 ## Phase 2: Simpler start screen
 - [x] Task: Start screen with 3 level buttons that start a game; small Continua + Album (FR-1) `15249a8`
