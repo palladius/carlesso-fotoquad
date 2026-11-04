@@ -215,5 +215,12 @@
     "title": "In canotto a Cala Goloritzé",
     "year": 2026,
     "tags": ["ale", "sebi", "mare", "viaggi"]
+  },
+  {
+    "id": "harry_potter",
+    "src": "demo/harry_potter.jpg",
+    "title": "Ale e Seby a Hogwarts",
+    "year": 2026,
+    "tags": ["ale", "sebi", "halloween"]
   }
 ]
