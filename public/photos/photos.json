@@ -236,5 +236,12 @@
     "title": "Il duello: Jedi Ale contro mini Fener Seby",
     "year": 2026,
     "tags": ["ale", "sebi", "spazio"]
+  },
+  {
+    "id": "sebi_bond",
+    "src": "demo/sebi_bond.jpg",
+    "title": "My name is Bond, Sebi Bond",
+    "year": 2026,
+    "tags": ["sebi", "pixar", "007"]
   }
 ]
