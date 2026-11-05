@@ -3,7 +3,6 @@
 ## Completed Tasks
 - [x] **Add Sebi Bond 007 photo to FotoQuad**:
   - Placed image in `public/photos/demo/sebi_bond.jpg` (896×1200 3:4 portrait JPEG).
-  - Placed backup copies in project root as `sebi_bond.jpeg` and `sebi_bond.jpg`.
   - Registered in `public/photos/photos.json` with tags `["sebi", "pixar", "007"]` and title `"My name is Bond, Sebi Bond"`.
   - Verified with `CI=true npm test` (139 passing tests) and `npm run build` (successful production PWA build).
 

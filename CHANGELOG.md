@@ -3,6 +3,22 @@
 All notable changes to **Carlesso FotoQuad** are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioning: [SemVer](https://semver.org/).
 
+## [0.2.1] - 2026-11-05
+
+### Added
+- Photos: "Ale e Seby a Tandem", space duel (Jedi Ale vs mini dark lord Seby), "Ale e Seby a Hogwarts",
+  "Sebi Bond" (added by another agent) — 35 demo photos.
+- **Photo hygiene tests** (`tests/photos.test.ts`): every demo image must be registered in `photos.json` with a
+  complete entry (`id` = file name, title, tags), be exactly 3:4, ≥ 800px tall, ≤ 600 KB; no orphans, no duplicate
+  ids, no stray image copies outside `public/`/`docs/`, manifest Prettier-formatted.
+- Lyria background music assets (theme + victory sting) for the upcoming music track.
+
+### Changed
+- `GEMINI.md` → `AGENTS.md` (with `GEMINI.md` symlink), photo rules aligned with the tests.
+
+### Fixed
+- Removed duplicate `sebi_bond.jpg/.jpeg` copies from the repo root and re-formatted `photos.json` (CI lint was red).
+
 ## [0.2.0] - 2026-11-03
 
 Track `rotation_ux_20261103` — playtesting feedback from Riccardo, Ale & Seby.
@@ -48,5 +64,6 @@ Track `mvp_zen_20261102` — first playable release (converged after 2 `conducto
 - Quality gates: Vitest (≥ 80% coverage), Playwright e2e (offline, responsive, pixel-level slicer, axe a11y,
   cached-load < 200ms), CI.
 
+[0.2.1]: https://github.com/palladius/carlesso-fotoquad/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/palladius/carlesso-fotoquad/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/palladius/carlesso-fotoquad/releases/tag/v0.1.0
