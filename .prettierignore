@@ -8,3 +8,5 @@ package-lock.json
 conductor
 docs
 *.md
+public/src/puffin-login.js
+public/ring.html

@@ -161,7 +161,23 @@ export class App {
     if (!events.length) return;
     this.state = state;
     const matched = events.filter((e) => e.type === 'matched').map((e) => (e as { photoId: string }).photoId);
-    if (matched.length) this.d.storage.unlock(matched);
+    if (matched.length) {
+      this.d.storage.unlock(matched);
+      if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+        window.dispatchEvent(
+          new CustomEvent('fotoquad:photo-matched', {
+            detail: {
+              level: this.level,
+              matched,
+              solved: state.solved.length,
+              total: state.photoIds.length,
+              moves: state.moves,
+              hints: state.hintsUsed,
+            },
+          }),
+        );
+      }
+    }
     const won = events.find((e) => e.type === 'won');
     if (won) this.d.storage.clearGame();
     else this.d.storage.saveGame(this.level, state);
@@ -172,6 +188,20 @@ export class App {
       this.d.audio.play('victory');
       const newRecord = this.d.storage.submitRecord(this.level, won.moves);
       const level = this.level;
+      if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
+        window.dispatchEvent(
+          new CustomEvent('fotoquad:level-won', {
+            detail: {
+              level,
+              photos: state.photoIds.length,
+              moves: won.moves,
+              hints: won.hintsUsed,
+              durationMs: won.durationMs,
+              newRecord,
+            },
+          }),
+        );
+      }
       this.d.root.append(
         victoryScreen({
           photos: state.photoIds.length,

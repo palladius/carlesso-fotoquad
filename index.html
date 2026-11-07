@@ -10,6 +10,183 @@
   </head>
   <body>
     <div id="app"></div>
+
+    <!-- 🐧 PuffinLogin Floating HUD & Modals (placed after #app to preserve tile Tab order) -->
+    <style>
+      #fotoquad-puffin-hud {
+        position: fixed;
+        top: 10px;
+        right: 12px;
+        z-index: 900;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          Roboto,
+          sans-serif;
+      }
+      .fq-hud-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #0f172a;
+        border: 1.5px solid #fbbf24;
+        color: #fde68a;
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 800;
+        cursor: pointer;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+        transition:
+          transform 0.15s ease,
+          border-color 0.15s ease;
+        text-decoration: none;
+      }
+      .fq-hud-btn:hover {
+        transform: translateY(-1px) scale(1.03);
+        border-color: #fde047;
+      }
+      .fq-user-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        background: #0f172a;
+        border: 1.5px solid #94a3b8;
+        color: #f8fafc;
+        padding: 4px 11px 4px 5px;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+      }
+      .fq-user-pill img {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 1.5px solid #fbbf24;
+      }
+      #fq-hof-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 9998;
+        background: rgba(6, 10, 22, 0.82);
+        backdrop-filter: blur(8px);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 16px;
+      }
+      #fq-hof-overlay.open {
+        display: flex;
+      }
+      .fq-hof-card {
+        position: relative;
+        width: 100%;
+        max-width: 600px;
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+      .fq-hof-close {
+        position: absolute;
+        top: 10px;
+        right: 12px;
+        z-index: 10;
+        background: #0f172a;
+        border: 1px solid #94a3b8;
+        color: #f8fafc;
+        border-radius: 999px;
+        padding: 4px 11px;
+        font-size: 0.78rem;
+        font-weight: 800;
+        cursor: pointer;
+      }
+    </style>
+
+    <nav id="fotoquad-puffin-hud" aria-label="Profilo Famiglia e Classifica">
+      <a href="./ring.html" class="fq-hud-btn" title="Puffin Login Ring of Fire"> 🔥💍 Ring </a>
+      <button id="fq-hof-btn" class="fq-hud-btn" type="button" title="Top 10 Hall of Fame">
+        🏆 Hall of Fame
+      </button>
+      <puffin-login id="puffin-widget" app-id="carlesso-fotoquad" require-login="false"></puffin-login>
+    </nav>
+
+    <div id="fq-hof-overlay" role="dialog" aria-modal="true" aria-label="FotoQuad Hall of Fame">
+      <div class="fq-hof-card">
+        <button id="fq-hof-close" class="fq-hof-close" type="button">📸 Torna al Gioco ✕</button>
+        <puffin-leaderboard id="fq-leaderboard" filter-game="carlesso-fotoquad"> </puffin-leaderboard>
+      </div>
+    </div>
+
     <script type="module" src="/src/main.ts"></script>
+    <script type="module">
+      const puffinScriptUrl = new URL('src/puffin-login.js', document.baseURI).href;
+      const { PuffinLogin } = await import(/* @vite-ignore */ puffinScriptUrl);
+
+      const loginWidget = document.getElementById('puffin-widget');
+      const hofBtn = document.getElementById('fq-hof-btn');
+      const hofOverlay = document.getElementById('fq-hof-overlay');
+      const hofClose = document.getElementById('fq-hof-close');
+      const leaderboard = document.getElementById('fq-leaderboard');
+
+      const existing = PuffinLogin.getCurrentUser();
+      if (!existing && (!navigator.webdriver || window.location.search.includes('puffin_login=1'))) {
+        setTimeout(() => {
+          if (loginWidget && typeof loginWidget.openModal === 'function') {
+            loginWidget.openModal();
+          }
+        }, 300);
+      }
+
+      hofBtn.addEventListener('click', () => {
+        hofOverlay.classList.add('open');
+        if (leaderboard && typeof leaderboard.refresh === 'function') {
+          leaderboard.refresh();
+        }
+      });
+
+      hofClose.addEventListener('click', () => hofOverlay.classList.remove('open'));
+      hofOverlay.addEventListener('click', (e) => {
+        if (e.target === hofOverlay) hofOverlay.classList.remove('open');
+      });
+
+      window.addEventListener('fotoquad:level-won', async (ev) => {
+        const d = ev.detail || {};
+        const baseByLevel = { facile: 1000, medio: 2500, difficile: 5000 };
+        const base = baseByLevel[d.level] || 1500;
+        const seconds = Math.max(1, Math.round((d.durationMs || 0) / 1000));
+        const speedBonus = Math.max(0, 600 - seconds * 3);
+        const computedScore = Math.max(
+          250,
+          base + (d.photos || 1) * 300 - (d.moves || 0) * 8 - (d.hints || 0) * 100 + speedBonus,
+        );
+        try {
+          await PuffinLogin.submitScore({
+            game_id: 'carlesso-fotoquad',
+            score: computedScore,
+            summary_text: `Completed ${d.photos || 6} family photos on ${d.level || 'medio'} mode in ${d.moves || 10} moves (${seconds}s)!`,
+            extra: {
+              level: d.level || 'medio',
+              photos: d.photos || 0,
+              moves: d.moves || 0,
+              hints: d.hints || 0,
+              seconds,
+              new_record: Boolean(d.newRecord),
+            },
+          });
+          setTimeout(() => {
+            hofOverlay.classList.add('open');
+          }, 2600);
+        } catch (err) {
+          console.warn('[FotoQuad PuffinLogin] Score submit warning:', err);
+        }
+      });
+    </script>
   </body>
 </html>

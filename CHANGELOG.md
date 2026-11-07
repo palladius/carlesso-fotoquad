@@ -3,6 +3,11 @@
 All notable changes to **Carlesso FotoQuad** are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), versioning: [SemVer](https://semver.org/).
 
+## [0.3.0] - 2026-11-07
+
+### Added
+- **PuffinLogin (`v1.6.1`) & Cloud Firestore Hall of Fame**: Integrated `<puffin-login>` (with 3x3 Spotlight, 7 Veo 3.1 `.mp4` animations, and `<tt>bot</tt>` UAT hero), `<puffin-leaderboard game-id="carlesso-fotoquad">`, top-right floating HUD bar, automatic score submission on level completion (`fotoquad:level-won`), and the GeoCities-style **Puffin Login Ring** (`public/ring.html`).
+
 ## [0.2.1] - 2026-11-05
 
 ### Added

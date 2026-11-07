@@ -31,12 +31,13 @@ export default defineConfig({
       workbox: {
         // Precache the app shell and every photo so the game works fully offline (FR-10).
         globPatterns: ['**/*.{js,css,html,svg,png,jpg,jpeg,webp,json}'],
+        globIgnores: ['assets/avatars/**', 'assets/puffin-ring.png', 'ring.html'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         clientsClaim: true,
         skipWaiting: true,
         navigateFallback: 'index.html',
         // The optional private manifest may not exist: never serve index.html in its place.
-        navigateFallbackDenylist: [/\/photos\//],
+        navigateFallbackDenylist: [/\/photos\//, /\/ring\.html/],
       },
     }),
   ],
