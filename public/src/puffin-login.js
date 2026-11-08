@@ -1,5 +1,5 @@
 /**
- * 🐧 PuffinLogin (`src/puffin-login.js`) — v0.9.0
+ * 🐧 PuffinLogin (`src/puffin-login.js`) — v1.9.4
  *
  * Mandatory Family Login Gate (`identity = NULL` until login), Compact 6-Hero Selector,
  * Bilingual EN/IT Skin, Cutie `X X X X` PIN Pad (with 3-Strike Jam), and Top-10 Hall of Fame.
@@ -20,6 +20,45 @@
  *    - Instant toggle between English (`🇬🇧 EN`) and Italian (`🇮🇹 IT`) in the modal header.
  */
 
+import {
+  PUFFIN_CARD_BACK,
+  MTG_RARITY_INFO,
+  PUFFIN_CARDS_CATALOG,
+  DEFAULT_DUMMY_USER_CARDS,
+  normalizeCardRarity,
+  normalizeCardId,
+  cardIdToFirestoreDocId,
+  getPuffinCardsCatalog,
+  getCardById,
+  rollPuffinCardDrop,
+  validateAndNormalizeUserCardRecord,
+  buildCardsOwnershipMap,
+  computeFamilyInsights as computeFamilyInsightsRaw,
+  compareFamilyRivals,
+  playCardAudioOrFanfare,
+  createPuffinCardsElementClass,
+  showPuffinCardRevealToast,
+} from './puffin-cards.js';
+
+export {
+  PUFFIN_CARD_BACK,
+  MTG_RARITY_INFO,
+  PUFFIN_CARDS_CATALOG,
+  DEFAULT_DUMMY_USER_CARDS,
+  normalizeCardRarity,
+  normalizeCardId,
+  cardIdToFirestoreDocId,
+  getPuffinCardsCatalog,
+  getCardById,
+  rollPuffinCardDrop,
+  validateAndNormalizeUserCardRecord,
+  buildCardsOwnershipMap,
+  compareFamilyRivals,
+  playCardAudioOrFanfare,
+  showPuffinCardRevealToast,
+};
+
+export const PUFFIN_LOGIN_VERSION = '1.9.4';
 export const PUFFIN_SALT = 'puffin-salt-2026';
 export const DEFAULT_CLOUD_API_URL = 'https://puffin-login-932724269481.europe-west1.run.app/v1';
 
@@ -209,6 +248,9 @@ export const I18N = Object.freeze({
     wrongPwdNoGuest: 'Wrong password! Try again.',
     wrongPinNoGuest: 'Wrong PIN! Try again.',
     playAsGuestBtn: 'Play as Guest',
+    playAsGuestNamedBtn: (name) => `Play as Guest (${name})`,
+    guestNameLabel: '🏆 Bragging Rights! Optional friend name:',
+    guestNamePlaceholder: 'e.g. Paolo (optional)',
     jamTitlePin: 'KEYPAD JAMMED! (3+ wrong tries)',
     jamTitlePwd: 'LOGIN JAMMED! (3+ wrong tries)',
     jamBody: (sec) =>
@@ -233,6 +275,9 @@ export const I18N = Object.freeze({
     wrongPwdNoGuest: 'Password sbagliata! Riprova.',
     wrongPinNoGuest: 'PIN sbagliato! Riprova.',
     playAsGuestBtn: 'Gioca come Ospite',
+    playAsGuestNamedBtn: (name) => `Gioca come Ospite (${name})`,
+    guestNameLabel: '🏆 Bragging Rights! Nome amico opzionale:',
+    guestNamePlaceholder: 'es. Paolo (opzionale)',
     jamTitlePin: 'TASTIERINO INCAGLIATO! (3+ errori)',
     jamTitlePwd: 'LOGIN INCAGLIATO! (3+ errori)',
     jamBody: (sec) =>
@@ -253,6 +298,8 @@ export const STORAGE_KEYS = Object.freeze({
   STATES: 'puffin_states_v1',
   OUTBOX: 'puffin_outbox_v1',
   LOCKOUT: 'puffin_lockout_v1',
+  CARDS: 'puffin_cards_v1',
+  GUEST_NAME: 'puffin_guest_name_v1',
 });
 
 export const MAX_FAILED_ATTEMPTS = 3;
@@ -509,6 +556,123 @@ export const DEFAULT_DUMMY_SCORES = Object.freeze([
     },
     is_dummy_seed: true,
   },
+  {
+    id: 'scr_seed_13_ale_jigsaw_7x7',
+    game_id: 'kids-jigsaw-puzzle',
+    player_id: 'ale',
+    score: 3180,
+    started_at: '2026-11-07T16:10:00Z',
+    ended_at: '2026-11-07T16:15:10Z',
+    duration_sec: 310,
+    hostname: 'ipad-ale.lan',
+    ip_address: '192.168.1.44',
+    device: 'iPad Air',
+    summary_text: 'Ale solved 7x7 (dragons_kingdom) in 310s!',
+    extra: {
+      difficulty: '7x7',
+      grid: '7x7',
+      grid_size: 7,
+      pieces: 49,
+      moves: 54,
+      tips_used: 0,
+      hints: 0,
+      schema_hash: 'jigsaw_dragons_kingdom_7x7',
+    },
+    is_dummy_seed: true,
+  },
+  {
+    id: 'scr_seed_14_seby_jigsaw_6x6',
+    game_id: 'kids-jigsaw-puzzle',
+    player_id: 'seby',
+    score: 1680,
+    started_at: '2026-11-07T16:20:00Z',
+    ended_at: '2026-11-07T16:23:20Z',
+    duration_sec: 200,
+    hostname: 'ipad-seby.lan',
+    ip_address: '192.168.1.45',
+    device: 'iPad Mini',
+    summary_text: 'Seby solved 6x6 (super_puffin) in 200s!',
+    extra: {
+      difficulty: '6x6',
+      grid: '6x6',
+      grid_size: 6,
+      pieces: 36,
+      moves: 39,
+      tips_used: 0,
+      hints: 0,
+      schema_hash: 'jigsaw_super_puffin_6x6',
+    },
+    is_dummy_seed: true,
+  },
+  {
+    id: 'scr_seed_15_ale_fotoquad_facile',
+    game_id: 'carlesso-fotoquad',
+    player_id: 'ale',
+    score: 1690,
+    started_at: '2026-11-07T17:01:00Z',
+    ended_at: '2026-11-07T17:01:28Z',
+    duration_sec: 28,
+    hostname: 'ipad-ale.lan',
+    ip_address: '192.168.1.44',
+    device: 'iPad Air',
+    summary_text: 'Ale completed FotoQuad Facile with 2 family photos in 28s!',
+    extra: {
+      difficulty: 'facile',
+      level: 'facile',
+      photos: 2,
+      moves: 10,
+      hints: 0,
+      seconds: 28,
+      new_record: true,
+    },
+    is_dummy_seed: true,
+  },
+  {
+    id: 'scr_seed_16_kate_fotoquad_medio',
+    game_id: 'carlesso-fotoquad',
+    player_id: 'kate',
+    score: 3480,
+    started_at: '2026-11-07T17:10:00Z',
+    ended_at: '2026-11-07T17:10:52Z',
+    duration_sec: 52,
+    hostname: 'macbook-di-kate.local',
+    ip_address: '192.168.1.42',
+    device: 'macOS Safari',
+    summary_text: 'Mum Kate conquered FotoQuad Medio with 3 photos in 52s!',
+    extra: {
+      difficulty: 'medio',
+      level: 'medio',
+      photos: 3,
+      moves: 18,
+      hints: 0,
+      seconds: 52,
+      new_record: true,
+    },
+    is_dummy_seed: true,
+  },
+  {
+    id: 'scr_seed_17_ricc_fotoquad_difficile',
+    game_id: 'carlesso-fotoquad',
+    player_id: 'riccardo',
+    score: 5890,
+    started_at: '2026-11-07T17:20:00Z',
+    ended_at: '2026-11-07T17:21:14Z',
+    duration_sec: 74,
+    hostname: 'pupurabbux.tailnet.lan',
+    ip_address: '100.94.27.10',
+    device: 'Linux RTX 5080 (Chrome)',
+    summary_text: 'Dad Riccardo mastered FotoQuad Difficile with 4 photos in 74s!',
+    extra: {
+      difficulty: 'difficile',
+      level: 'difficile',
+      photos: 4,
+      moves: 26,
+      hints: 0,
+      seconds: 74,
+      new_record: true,
+    },
+    is_dummy_seed: true,
+  },
 ]);
 
 export function normalizeProfileId(rawId, allowNull = false) {
@@ -522,6 +686,16 @@ export function normalizeProfileId(rawId, allowNull = false) {
   return allowNull ? null : 'guest';
 }
 
+export function normalizeGuestName(rawName) {
+  if (rawName === null || rawName === undefined) return null;
+  const cleaned = String(rawName)
+    .replace(/[<>"'`\r\n\t]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 32);
+  return cleaned.length > 0 ? cleaned : null;
+}
+
 export function getProfileById(rawId) {
   const id = normalizeProfileId(rawId, true);
   if (id === null) return NULL_PLAYER_PROFILE;
@@ -529,10 +703,11 @@ export function getProfileById(rawId) {
 }
 
 export function validateAndNormalizeScorePayload(raw = {}, fallbackTelemetry = {}) {
-  const gameId = String(raw.game_id || raw.gameId || raw.appId || '').trim();
-  if (!gameId) {
+  const rawGameId = String(raw.game_id || raw.gameId || raw.appId || '').trim();
+  if (!rawGameId) {
     throw new Error('[PuffinLogin] Guaranteed field `game_id` is required on every score record.');
   }
+  const gameId = rawGameId.toLowerCase() === 'fotoquad' ? 'carlesso-fotoquad' : rawGameId;
 
   const hasExplicitNull =
     raw.player_id === null ||
@@ -547,12 +722,30 @@ export function validateAndNormalizeScorePayload(raw = {}, fallbackTelemetry = {
 
   const profile = getProfileById(resolvedPlayerId);
 
+  const rawExtra =
+    (raw.extra && typeof raw.extra === 'object' ? raw.extra : null) ||
+    (raw.metadata && typeof raw.metadata === 'object' ? raw.metadata : null) ||
+    {};
+  const extra = { ...rawExtra };
+
+  const explicitDurationRaw =
+    raw.duration_sec ??
+    raw.durationSec ??
+    extra.duration_sec ??
+    extra.durationSec ??
+    extra.seconds ??
+    extra.timeSeconds ??
+    extra.time_sec ??
+    (extra.durationMs !== undefined ? Math.round(Number(extra.durationMs) / 1000) : undefined);
+  const explicitDurationNum = Number(explicitDurationRaw);
+  const hasExplicitDuration = Number.isFinite(explicitDurationNum) && explicitDurationNum > 0;
+  const fallbackDur = hasExplicitDuration ? Math.max(1, Math.round(explicitDurationNum)) : 180;
+
   const nowIso = new Date().toISOString();
   const endedAtRaw = raw.ended_at || raw.endedAt || raw.playedAt || nowIso;
   const endedMs = Number.isNaN(Date.parse(endedAtRaw)) ? Date.now() : Date.parse(endedAtRaw);
   const endedAt = new Date(endedMs).toISOString();
 
-  const fallbackDur = Number(raw.duration_sec ?? raw.durationSec) || 180;
   const startedAtRaw =
     raw.started_at ||
     raw.startedAt ||
@@ -562,17 +755,95 @@ export function validateAndNormalizeScorePayload(raw = {}, fallbackTelemetry = {
     : Math.min(endedMs, Date.parse(startedAtRaw));
   const startedAt = new Date(startedMs).toISOString();
 
-  const durationSec = Math.max(1, Math.round((endedMs - startedMs) / 1000));
+  const durationSec = hasExplicitDuration
+    ? Math.max(1, Math.round(explicitDurationNum))
+    : Math.max(1, Math.round((endedMs - startedMs) / 1000));
   const score = Number(raw.score) || 0;
 
-  const rawExtra =
-    (raw.extra && typeof raw.extra === 'object' ? raw.extra : null) ||
-    (raw.metadata && typeof raw.metadata === 'object' ? raw.metadata : null) ||
-    {};
-  const extra = { ...rawExtra };
-  if (raw.mode && !extra.difficulty && !extra.mode) {
-    extra.mode = raw.mode;
+  // Normalize canonical difficulty / mode / level
+  const rawDifficulty =
+    extra.difficulty ??
+    raw.difficulty ??
+    raw.mode ??
+    extra.mode ??
+    (typeof extra.level === 'string' && Number.isNaN(Number(extra.level)) ? extra.level : undefined);
+  if (rawDifficulty !== undefined && rawDifficulty !== null && String(rawDifficulty).trim() !== '') {
+    extra.difficulty = String(rawDifficulty).trim();
   }
+  if (raw.mode && !extra.mode) {
+    extra.mode = String(raw.mode).trim();
+  }
+
+  // Normalize grid & grid_size (e.g., 6x6, 7x7, easy_6x6, grid_size: 7)
+  const rawGridSize = Number(extra.grid_size ?? extra.gridSize ?? raw.grid_size ?? raw.gridSize);
+  if (Number.isInteger(rawGridSize) && rawGridSize > 0) {
+    extra.grid_size = rawGridSize;
+    if (!extra.grid) {
+      extra.grid = `${rawGridSize}x${rawGridSize}`;
+    }
+  } else if (typeof extra.grid === 'string' && /^\d+x\d+$/i.test(extra.grid.trim())) {
+    const cleanGrid = extra.grid.trim().toLowerCase();
+    extra.grid = cleanGrid;
+    const [gx, gy] = cleanGrid.split('x').map(Number);
+    if (gx === gy && gx > 0 && !extra.grid_size) {
+      extra.grid_size = gx;
+    }
+  } else if (typeof extra.difficulty === 'string') {
+    const gridMatch = extra.difficulty.match(/(?:^|_)(\d+)x(\d+)(?:$|_)/i);
+    if (gridMatch) {
+      const gx = Number(gridMatch[1]);
+      const gy = Number(gridMatch[2]);
+      extra.grid = `${gx}x${gy}`;
+      if (gx === gy && gx > 0) {
+        extra.grid_size = gx;
+      }
+    }
+  }
+
+  if (
+    Number.isInteger(extra.grid_size) &&
+    extra.grid_size > 0 &&
+    extra.pieces === undefined &&
+    (gameId === 'kids-jigsaw-puzzle' || String(extra.difficulty || '').includes('x'))
+  ) {
+    extra.pieces = extra.grid_size * extra.grid_size;
+  }
+
+  // Normalize efficiency metrics (moves, hints / tips_used, photos)
+  if (extra.moves !== undefined && extra.moves !== null && !Number.isNaN(Number(extra.moves))) {
+    extra.moves = Number(extra.moves);
+  }
+  const rawHints =
+    extra.hints ?? extra.tips_used ?? extra.hints_used ?? raw.hints ?? raw.tips_used;
+  if (rawHints !== undefined && rawHints !== null && !Number.isNaN(Number(rawHints))) {
+    extra.hints = Number(rawHints);
+  }
+  if (extra.photos !== undefined && extra.photos !== null && !Number.isNaN(Number(extra.photos))) {
+    extra.photos = Number(extra.photos);
+  }
+
+  // Optional Bragging Friend Guest Name (`guest_name: "Paolo"`)
+  const rawGuestName =
+    raw.guest_name ??
+    raw.guestName ??
+    extra.guest_name ??
+    extra.guestName ??
+    fallbackTelemetry.guest_name ??
+    fallbackTelemetry.guestName;
+  const guestName =
+    resolvedPlayerId === 'guest' || resolvedPlayerId === null
+      ? normalizeGuestName(rawGuestName)
+      : null;
+  if (guestName) {
+    extra.guest_name = guestName;
+  }
+
+  const effectiveDisplayName = guestName
+    ? `${profile.shortName} (${guestName})`
+    : profile.displayName;
+  const effectiveShortName = guestName
+    ? `${profile.shortName} (${guestName})`
+    : profile.shortName;
 
   const hostname = String(raw.hostname ?? fallbackTelemetry.hostname ?? '').trim();
   const ipAddress =
@@ -589,7 +860,7 @@ export function validateAndNormalizeScorePayload(raw = {}, fallbackTelemetry = {
   const summaryText =
     raw.summary_text ||
     raw.summaryText ||
-    `${profile.displayName} scored ${score} pt in ${gameId}`;
+    `${effectiveDisplayName} scored ${score} pt in ${gameId}`;
 
   return {
     id: raw.id || `scr_${endedMs}_${resolvedPlayerId || 'null'}`,
@@ -598,6 +869,8 @@ export function validateAndNormalizeScorePayload(raw = {}, fallbackTelemetry = {
     ended_at: endedAt,
     duration_sec: durationSec,
     player_id: resolvedPlayerId,
+    guest_name: guestName,
+    guestName,
     score,
     hostname,
     source_ip: ipAddress,
@@ -611,8 +884,8 @@ export function validateAndNormalizeScorePayload(raw = {}, fallbackTelemetry = {
     playedAt: endedAt,
     durationSec,
     userId: resolvedPlayerId,
-    displayName: profile.displayName,
-    shortName: profile.shortName,
+    displayName: effectiveDisplayName,
+    shortName: effectiveShortName,
     rpgClass: profile.rpgClass,
     colorHex: profile.colorHex,
     emoji: profile.emoji,
@@ -620,6 +893,224 @@ export function validateAndNormalizeScorePayload(raw = {}, fallbackTelemetry = {
     ipAddress,
     summaryText,
     metadata: extra,
+  };
+}
+
+function summarizeScoreGroup(items = [], key = 'all', label = 'All') {
+  if (!Array.isArray(items) || items.length === 0) {
+    return {
+      key,
+      label,
+      totalMatches: 0,
+      champion: null,
+      fastestPlayer: null,
+      podium: [],
+      durationStats: { avgSec: 0, minSec: 0, maxSec: 0, medianSec: 0, totalMatches: 0 },
+      efficiencyStats: {
+        totalMatches: 0,
+        minMoves: null,
+        avgMoves: null,
+        minHints: null,
+        avgHints: null,
+      },
+      byPlayer: {},
+    };
+  }
+
+  const byScore = [...items].sort((a, b) => b.score - a.score || a.duration_sec - b.duration_sec);
+  const byDuration = [...items].sort(
+    (a, b) => a.duration_sec - b.duration_sec || b.score - a.score
+  );
+
+  const toChampSummary = (rec) => ({
+    id: rec.id,
+    player_id: rec.player_id,
+    guest_name: rec.guest_name || rec.extra?.guest_name || null,
+    displayName: rec.displayName,
+    shortName: rec.shortName,
+    emoji: rec.emoji,
+    colorHex: rec.colorHex,
+    score: rec.score,
+    duration_sec: rec.duration_sec,
+    moves: rec.extra?.moves ?? null,
+    hints: rec.extra?.hints ?? null,
+    grid: rec.extra?.grid ?? null,
+    difficulty: rec.extra?.difficulty ?? null,
+    ended_at: rec.ended_at,
+  });
+
+  const champion = toChampSummary(byScore[0]);
+  const fastestPlayer = toChampSummary(byDuration[0]);
+
+  const seenPlayers = new Set();
+  const podium = [];
+  for (const rec of byScore) {
+    const guestSub = rec.guest_name || rec.extra?.guest_name;
+    const pid =
+      guestSub && (rec.player_id === 'guest' || !rec.player_id)
+        ? `guest:${String(guestSub).toLowerCase()}`
+        : rec.player_id || 'null';
+    if (!seenPlayers.has(pid)) {
+      seenPlayers.add(pid);
+      podium.push(toChampSummary(rec));
+      if (podium.length >= 3) break;
+    }
+  }
+
+  const durs = items
+    .map((s) => Number(s.duration_sec))
+    .filter((d) => Number.isFinite(d) && d > 0)
+    .sort((a, b) => a - b);
+  const sumDur = durs.reduce((acc, v) => acc + v, 0);
+  const mid = Math.floor(durs.length / 2);
+  const medianSec =
+    durs.length === 0
+      ? 0
+      : durs.length % 2 === 1
+      ? durs[mid]
+      : Math.round((durs[mid - 1] + durs[mid]) / 2);
+
+  const movesArr = items
+    .map((s) => Number(s.extra?.moves))
+    .filter((m) => Number.isFinite(m) && m >= 0);
+  const hintsArr = items
+    .map((s) => Number(s.extra?.hints))
+    .filter((h) => Number.isFinite(h) && h >= 0);
+
+  const byPlayer = {};
+  for (const rec of items) {
+    const guestSub = rec.guest_name || rec.extra?.guest_name;
+    const pid =
+      guestSub && (rec.player_id === 'guest' || !rec.player_id)
+        ? `guest:${String(guestSub).toLowerCase()}`
+        : rec.player_id || 'null';
+    if (!byPlayer[pid]) {
+      byPlayer[pid] = {
+        player_id: rec.player_id,
+        guest_name: guestSub || null,
+        displayName: rec.displayName,
+        shortName: rec.shortName,
+        emoji: rec.emoji,
+        colorHex: rec.colorHex,
+        matches: 0,
+        bestScore: 0,
+        _scoreSum: 0,
+        bestDurationSec: Infinity,
+        _durSum: 0,
+        minMoves: Infinity,
+        minHints: Infinity,
+      };
+    }
+    const p = byPlayer[pid];
+    p.matches += 1;
+    p._scoreSum += rec.score;
+    p._durSum += rec.duration_sec;
+    if (rec.score > p.bestScore) p.bestScore = rec.score;
+    if (rec.duration_sec < p.bestDurationSec) p.bestDurationSec = rec.duration_sec;
+    if (Number.isFinite(Number(rec.extra?.moves)) && Number(rec.extra.moves) < p.minMoves) {
+      p.minMoves = Number(rec.extra.moves);
+    }
+    if (Number.isFinite(Number(rec.extra?.hints)) && Number(rec.extra.hints) < p.minHints) {
+      p.minHints = Number(rec.extra.hints);
+    }
+  }
+
+  for (const p of Object.values(byPlayer)) {
+    p.avgScore = Math.round(p._scoreSum / p.matches);
+    p.avgDurationSec = Math.round(p._durSum / p.matches);
+    if (p.bestDurationSec === Infinity) p.bestDurationSec = 0;
+    if (p.minMoves === Infinity) p.minMoves = null;
+    if (p.minHints === Infinity) p.minHints = null;
+    delete p._scoreSum;
+    delete p._durSum;
+  }
+
+  return {
+    key,
+    label,
+    totalMatches: items.length,
+    champion,
+    fastestPlayer,
+    podium,
+    durationStats: {
+      avgSec: durs.length ? Math.round(sumDur / durs.length) : 0,
+      minSec: durs.length ? durs[0] : 0,
+      maxSec: durs.length ? durs[durs.length - 1] : 0,
+      medianSec,
+      totalMatches: items.length,
+    },
+    efficiencyStats: {
+      totalMatches: items.length,
+      minMoves: movesArr.length ? Math.min(...movesArr) : null,
+      avgMoves: movesArr.length
+        ? Math.round(movesArr.reduce((a, b) => a + b, 0) / movesArr.length)
+        : null,
+      minHints: hintsArr.length ? Math.min(...hintsArr) : null,
+      avgHints: hintsArr.length
+        ? Math.round((hintsArr.reduce((a, b) => a + b, 0) / hintsArr.length) * 10) / 10
+        : null,
+    },
+    byPlayer,
+  };
+}
+
+export function computePerGameDashboard(scores = [], gameId = '') {
+  const rawTarget = String(gameId || '').trim().toLowerCase();
+  const targetGameId = rawTarget === 'fotoquad' ? 'carlesso-fotoquad' : rawTarget;
+
+  const normalized = (Array.isArray(scores) ? scores : [])
+    .map((s) => {
+      try {
+        return validateAndNormalizeScorePayload(s);
+      } catch {
+        return null;
+      }
+    })
+    .filter((s) => s && (!targetGameId || s.game_id.toLowerCase() === targetGameId));
+
+  const subModeBuckets = new Map();
+  const gridBuckets = new Map();
+
+  for (const s of normalized) {
+    const rawSub = String(
+      s.extra?.difficulty ?? s.extra?.level ?? s.extra?.mode ?? 'standard'
+    )
+      .trim()
+      .toLowerCase();
+    const subKey = rawSub || 'standard';
+    if (!subModeBuckets.has(subKey)) subModeBuckets.set(subKey, []);
+    subModeBuckets.get(subKey).push(s);
+
+    if (s.extra?.grid) {
+      const gKey = String(s.extra.grid).trim().toLowerCase();
+      if (!gridBuckets.has(gKey)) gridBuckets.set(gKey, []);
+      gridBuckets.get(gKey).push(s);
+      if (gKey !== subKey) {
+        if (!subModeBuckets.has(gKey)) subModeBuckets.set(gKey, []);
+        subModeBuckets.get(gKey).push(s);
+      }
+    }
+  }
+
+  const bySubMode = {};
+  for (const [k, list] of subModeBuckets.entries()) {
+    bySubMode[k] = summarizeScoreGroup(list, k, k);
+  }
+
+  const byGrid = {};
+  for (const [k, list] of gridBuckets.entries()) {
+    byGrid[k] = summarizeScoreGroup(list, k, k);
+  }
+
+  const overall = summarizeScoreGroup(normalized, 'all', 'All Modes');
+
+  return {
+    game_id: targetGameId || 'ALL',
+    totalMatches: normalized.length,
+    overall,
+    bySubMode,
+    byGrid,
+    byPlayer: overall.byPlayer,
   };
 }
 
@@ -632,6 +1123,21 @@ export function validateAndNormalizeLoginPayload(raw = {}, fallbackTelemetry = {
     false
   );
   const profile = getProfileById(resolvedPlayerId);
+
+  const rawGuestName =
+    raw.guest_name ??
+    raw.guestName ??
+    raw.extra?.guest_name ??
+    fallbackTelemetry.guest_name ??
+    fallbackTelemetry.guestName;
+  const guestName =
+    resolvedPlayerId === 'guest' ? normalizeGuestName(rawGuestName) : null;
+  const effectiveDisplayName = guestName
+    ? `${profile.shortName} (${guestName})`
+    : profile.displayName;
+  const effectiveShortName = guestName
+    ? `${profile.shortName} (${guestName})`
+    : profile.shortName;
 
   const nowIso = new Date().toISOString();
   const loggedAtRaw = raw.logged_at || raw.loggedAt || raw.timestamp || nowIso;
@@ -655,6 +1161,8 @@ export function validateAndNormalizeLoginPayload(raw = {}, fallbackTelemetry = {
     id: raw.id || `lgn_${loggedMs}_${resolvedPlayerId}`,
     player_id: resolvedPlayerId,
     userId: resolvedPlayerId,
+    guest_name: guestName,
+    guestName,
     app_id: appId,
     game_id: appId,
     appId,
@@ -666,8 +1174,8 @@ export function validateAndNormalizeLoginPayload(raw = {}, fallbackTelemetry = {
     hostname,
     device,
     auth_method: authMethod,
-    displayName: profile.displayName,
-    shortName: profile.shortName,
+    displayName: effectiveDisplayName,
+    shortName: effectiveShortName,
     role: profile.role,
     colorHex: profile.colorHex,
     avatar: profile.avatar,
@@ -734,7 +1242,7 @@ const _telemetryCache = {
   fetched: false,
 };
 
-async function detectClientTelemetry(cfg = {}) {
+export async function detectClientTelemetry(cfg = {}) {
   const rawHost =
     cfg.hostname ||
     (typeof window !== 'undefined' && window.PUFFINLOGIN_ENV?.hostname) ||
@@ -743,24 +1251,47 @@ async function detectClientTelemetry(cfg = {}) {
 
   const isGenericLocal = !rawHost || rawHost === 'localhost' || rawHost === '127.0.0.1';
   const hostname = isGenericLocal ? (cfg.hostname || '') : rawHost;
+  const apiUrl = cfg.apiUrl || resolvePuffinConfig(cfg).apiUrl || DEFAULT_CLOUD_API_URL;
 
   if (!_telemetryCache.fetched && typeof fetch === 'function') {
     _telemetryCache.fetched = true;
+    let resolvedFromBackend = false;
+    // 1. Try PuffinLogin backend `/v1/whoami` first (observes real HTTP source IP via x-forwarded-for / socket)
     try {
       const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 900);
-      const res = await fetch('https://api.ipify.org?format=json', { signal: ctrl.signal });
+      const t = setTimeout(() => ctrl.abort(), 800);
+      const res = await fetch(`${apiUrl}/whoami`, { signal: ctrl.signal });
       clearTimeout(t);
       if (res.ok) {
         const data = await res.json();
-        if (data?.ip) _telemetryCache.ipAddress = data.ip;
+        const serverIp = String(data?.source_ip || data?.ip_address || '').trim();
+        if (serverIp && serverIp !== '127.0.0.1' && serverIp !== '::1') {
+          _telemetryCache.ipAddress = serverIp;
+          resolvedFromBackend = true;
+        }
       }
     } catch {}
+
+    // 2. Fallback to ipify for static/localhost sessions where backend is local loopback or offline
+    if (!resolvedFromBackend) {
+      try {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 900);
+        const res = await fetch('https://api.ipify.org?format=json', { signal: ctrl.signal });
+        clearTimeout(t);
+        if (res.ok) {
+          const data = await res.json();
+          if (data?.ip) _telemetryCache.ipAddress = data.ip;
+        }
+      } catch {}
+    }
   }
 
   const ipAddress =
+    cfg.source_ip ||
     cfg.ipAddress ||
-    (typeof window !== 'undefined' && window.PUFFINLOGIN_ENV?.ipAddress) ||
+    (typeof window !== 'undefined' &&
+      (window.PUFFINLOGIN_ENV?.source_ip || window.PUFFINLOGIN_ENV?.ipAddress)) ||
     _telemetryCache.ipAddress ||
     '127.0.0.1';
 
@@ -769,7 +1300,7 @@ async function detectClientTelemetry(cfg = {}) {
       (navigator.userAgentData?.platform || navigator.platform)) ||
     'Browser';
 
-  return { hostname, ipAddress, device: platform };
+  return { hostname, source_ip: ipAddress, ip_address: ipAddress, ipAddress, device: platform };
 }
 
 export function formatHostOrIp(entry) {
@@ -1629,6 +2160,20 @@ dialog::backdrop {
   width: 100%;
 }
 
+.guest-brag-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.42rem;
+  width: 100%;
+}
+
+.guest-brag-label {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #cbd5e1;
+  text-align: left;
+}
+
 .pwd-input {
   flex: 1;
   min-width: 0;
@@ -1826,6 +2371,7 @@ export class PuffinLoginElement extends BaseElement {
   connectedCallback() {
     ensureDummyScoresSeeded(false);
     this.syncConfigFromAttributes();
+    detectClientTelemetry(this.config).catch(() => {});
     this.ensureActiveSession();
     this.renderBadge();
     this.renderModalContent();
@@ -1997,17 +2543,54 @@ export class PuffinLoginElement extends BaseElement {
   }
 
   /**
-   * Returns the authenticated profile object, or `null` if not logged in (`identity === NULL`).
+   * Returns the active login session object (with `source_ip`, `ip_address`, `hostname`, `device`, `logged_at`),
+   * or `null` if unauthenticated (`identity === NULL`).
    */
-  getCurrentUser() {
+  getAuthSession() {
     try {
       const raw = localStorage.getItem(STORAGE_KEYS.AUTH);
       if (raw) {
         const parsed = JSON.parse(raw);
-        if (parsed?.userId) {
-          const id = normalizeProfileId(parsed.userId, true);
-          const found = PUFFIN_PROFILES.find((p) => p.id === id);
-          if (found) return found;
+        const uid = parsed?.player_id || parsed?.userId;
+        if (uid) {
+          return validateAndNormalizeLoginPayload(parsed, {
+            appId: this.config?.appId,
+            hostname: this.config?.hostname,
+            ipAddress: this.config?.ipAddress || _telemetryCache.ipAddress,
+          });
+        }
+      }
+    } catch {}
+    return null;
+  }
+
+  /**
+   * Returns the authenticated profile object (enriched with `source_ip`, `ip_address`, `hostname`, `device`, `logged_at`),
+   * or `null` if not logged in (`identity === NULL`).
+   */
+  getCurrentUser() {
+    try {
+      const session = this.getAuthSession();
+      if (session?.userId) {
+        const found = PUFFIN_PROFILES.find((p) => p.id === session.userId);
+        if (found) {
+          const guestName = found.id === 'guest' ? normalizeGuestName(session.guest_name) : null;
+          return {
+            ...found,
+            guest_name: guestName,
+            guestName,
+            displayName: guestName ? `${found.shortName} (${guestName})` : found.displayName,
+            shortName: guestName ? `${found.shortName} (${guestName})` : found.shortName,
+            loggedAt: session.loggedAt,
+            logged_at: session.logged_at,
+            appId: session.appId,
+            app_id: session.app_id,
+            source_ip: session.source_ip,
+            ip_address: session.ip_address,
+            ipAddress: session.ipAddress,
+            hostname: session.hostname,
+            device: session.device,
+          };
         }
       }
     } catch {}
@@ -2025,12 +2608,12 @@ export class PuffinLoginElement extends BaseElement {
     this.renderModalContent();
     this.$drawer.hidden = true;
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('puffin-auth-updated', { detail: { user: null } }));
+      window.dispatchEvent(new CustomEvent('puffin-auth-updated', { detail: { user: null, session: null } }));
     }
     if (emitEvent) {
       this.dispatchEvent(
         new CustomEvent('puffin-user-changed', {
-          detail: { user: null, previousUser: prev },
+          detail: { user: null, previousUser: prev, session: null },
           bubbles: true,
           composed: true,
         })
@@ -2046,34 +2629,159 @@ export class PuffinLoginElement extends BaseElement {
     }
   }
 
-  saveActiveSession(userId, emitEvent = true) {
+  _persistLocalLoginSession(session) {
+    try {
+      localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(session));
+      const rawList = localStorage.getItem(STORAGE_KEYS.LOGINS);
+      const list = rawList ? JSON.parse(rawList) : [];
+      const arr = Array.isArray(list) ? list : [];
+      const idx = arr.findIndex((item) => item && item.id === session.id);
+      if (idx >= 0) {
+        arr[idx] = session;
+      } else {
+        arr.unshift(session);
+      }
+      localStorage.setItem(STORAGE_KEYS.LOGINS, JSON.stringify(arr.slice(0, 100)));
+    } catch {}
+  }
+
+  async _syncLoginTelemetry(initialSession) {
+    try {
+      const telemetry = await detectClientTelemetry(this.config);
+      let enriched = validateAndNormalizeLoginPayload(
+        {
+          ...initialSession,
+          hostname: initialSession.hostname || telemetry.hostname,
+          source_ip: telemetry.source_ip,
+          ip_address: telemetry.ip_address,
+          device: telemetry.device,
+        },
+        telemetry
+      );
+      this._persistLocalLoginSession(enriched);
+
+      if (typeof fetch === 'function') {
+        const res = await fetch(`${this.config.apiUrl}/logins`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(enriched),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const serverIp = String(data?.source_ip || data?.ip_address || data?.login?.source_ip || '').trim();
+          if (serverIp) {
+            _telemetryCache.ipAddress = serverIp;
+            enriched = validateAndNormalizeLoginPayload(
+              {
+                ...enriched,
+                ...(data?.login || {}),
+                source_ip: serverIp,
+                ip_address: serverIp,
+              },
+              telemetry
+            );
+            this._persistLocalLoginSession(enriched);
+          }
+        }
+      }
+
+      if (typeof window !== 'undefined') {
+        const activeUser = this.getCurrentUser();
+        window.dispatchEvent(new CustomEvent('puffin-login-recorded', { detail: enriched }));
+        if (activeUser && activeUser.id === enriched.userId) {
+          window.dispatchEvent(
+            new CustomEvent('puffin-auth-updated', { detail: { user: activeUser, session: enriched } })
+          );
+        }
+      }
+      return enriched;
+    } catch {
+      return initialSession;
+    }
+  }
+
+  saveActiveSession(userId, emitEvent = true, options = {}) {
     const prev = this.getCurrentUser();
     const id = normalizeProfileId(userId, true);
     if (!id) {
       this.logout(emitEvent);
       return null;
     }
-    const next = PUFFIN_PROFILES.find((p) => p.id === id) || PUFFIN_PROFILES[0];
-    try {
-      localStorage.setItem(
-        STORAGE_KEYS.AUTH,
-        JSON.stringify({
-          userId: next.id,
-          loggedAt: new Date().toISOString(),
-          appId: this.config.appId,
-        })
-      );
-    } catch {}
+    const baseProfile = PUFFIN_PROFILES.find((p) => p.id === id) || PUFFIN_PROFILES[0];
+    const guestName =
+      baseProfile.id === 'guest'
+        ? normalizeGuestName(options.guest_name ?? options.guestName ?? this.guestNameBuffer)
+        : null;
+    if (baseProfile.id === 'guest') {
+      try {
+        if (guestName) {
+          localStorage.setItem(STORAGE_KEYS.GUEST_NAME, guestName);
+        } else {
+          localStorage.removeItem(STORAGE_KEYS.GUEST_NAME);
+        }
+      } catch {}
+    }
+    const nowIso = new Date().toISOString();
+    const initialIp =
+      this.config.ipAddress ||
+      (typeof window !== 'undefined' &&
+        (window.PUFFINLOGIN_ENV?.source_ip || window.PUFFINLOGIN_ENV?.ipAddress)) ||
+      _telemetryCache.ipAddress ||
+      '127.0.0.1';
+    const initialHost =
+      this.config.hostname ||
+      (typeof window !== 'undefined' &&
+        (window.PUFFINLOGIN_ENV?.hostname || window.location?.hostname)) ||
+      '';
+    const initialDevice =
+      (typeof navigator !== 'undefined' &&
+        (navigator.userAgentData?.platform || navigator.platform)) ||
+      'Browser';
+
+    const session = validateAndNormalizeLoginPayload({
+      id: `lgn_${Date.now()}_${baseProfile.id}`,
+      player_id: baseProfile.id,
+      guest_name: guestName,
+      app_id: this.config.appId,
+      logged_at: nowIso,
+      source_ip: initialIp,
+      ip_address: initialIp,
+      hostname: initialHost === 'localhost' || initialHost === '127.0.0.1' ? '' : initialHost,
+      device: initialDevice,
+      auth_method: baseProfile.authType || 'none',
+    });
+
+    this._persistLocalLoginSession(session);
+    this._syncLoginTelemetry(session);
+
+    const next = this.getCurrentUser() || {
+      ...baseProfile,
+      guest_name: guestName,
+      guestName,
+      displayName: guestName ? `${baseProfile.shortName} (${guestName})` : baseProfile.displayName,
+      shortName: guestName ? `${baseProfile.shortName} (${guestName})` : baseProfile.shortName,
+      loggedAt: session.loggedAt,
+      logged_at: session.logged_at,
+      appId: session.appId,
+      app_id: session.app_id,
+      source_ip: session.source_ip,
+      ip_address: session.ip_address,
+      ipAddress: session.ipAddress,
+      hostname: session.hostname,
+      device: session.device,
+    };
+
     this.highlightGuest = false;
     this.renderBadge();
     this.renderModalContent();
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('puffin-auth-updated', { detail: { user: next } }));
+      window.dispatchEvent(new CustomEvent('puffin-auth-updated', { detail: { user: next, session } }));
+      window.dispatchEvent(new CustomEvent('puffin-login-recorded', { detail: session }));
     }
     if (emitEvent) {
       this.dispatchEvent(
         new CustomEvent('puffin-user-changed', {
-          detail: { user: next, previousUser: prev },
+          detail: { user: next, previousUser: prev, session },
           bubbles: true,
           composed: true,
         })
@@ -2162,7 +2870,7 @@ export class PuffinLoginElement extends BaseElement {
     this.$closeBtn.hidden = !activeUser && this.config.requireLogin;
     this.$dialog.setAttribute('closedby', !activeUser && this.config.requireLogin ? 'none' : 'any');
 
-    const pills = [];
+    const pills = [`<span class="policy-pill">🐧 v${PUFFIN_LOGIN_VERSION}</span>`];
     if (!this.config.acceptGuest) pills.push(`<span class="policy-pill warn">No Guest</span>`);
     if (this.config.requireStrongAuth) pills.push(`<span class="policy-pill warn">Strong Auth</span>`);
     if (this.config.matureOnly) pills.push(`<span class="policy-pill warn">Adults Only</span>`);
@@ -2324,21 +3032,58 @@ export class PuffinLoginElement extends BaseElement {
     }
 
     if (profile.authType === 'none') {
+      let savedGuestName = '';
+      try {
+        savedGuestName =
+          this.getAuthSession()?.guest_name ||
+          localStorage.getItem(STORAGE_KEYS.GUEST_NAME) ||
+          '';
+      } catch {}
+      const cleanInitialGuest = normalizeGuestName(savedGuestName) || '';
+      const initialBtnText = cleanInitialGuest
+        ? tr.playAsGuestNamedBtn(cleanInitialGuest)
+        : tr.playAsGuestBtn;
+
       this.$drawerHeader.innerHTML = `
         <span><strong>${profile.shortName}</strong></span>
-        <span class="attempts-pill">1-Click</span>
+        <span class="attempts-pill">1-Click + Bragging</span>
       `;
       this.$forgotBtn.hidden = true;
       this.$drawerBody.innerHTML = `
-        <button type="button" class="action-btn" id="confirm-guest-btn" style="width:100%;padding:0.65rem 1rem;font-size:0.95rem;">
-          🐧 ${tr.playAsGuestBtn}
-        </button>
+        <form class="guest-brag-form" id="guest-login-form">
+          <label class="guest-brag-label" for="guest-name-input">${tr.guestNameLabel}</label>
+          <input
+            type="text"
+            id="guest-name-input"
+            name="guest_name"
+            class="pwd-input guest-name-input"
+            placeholder="${tr.guestNamePlaceholder}"
+            maxlength="32"
+            autocomplete="nickname"
+          />
+          <button type="submit" class="action-btn" id="confirm-guest-btn" style="width:100%;padding:0.65rem 1rem;font-size:0.95rem;">
+            🐧 <span id="confirm-guest-btn-label">${initialBtnText}</span>
+          </button>
+        </form>
       `;
-      const $gBtn = this.$drawerBody.querySelector('#confirm-guest-btn');
-      setTimeout(() => $gBtn?.focus(), 30);
-      $gBtn?.addEventListener('click', () => {
+      const $gForm = this.$drawerBody.querySelector('#guest-login-form');
+      const $gInput = this.$drawerBody.querySelector('#guest-name-input');
+      const $gLabel = this.$drawerBody.querySelector('#confirm-guest-btn-label');
+      if ($gInput) {
+        $gInput.value = cleanInitialGuest;
+        setTimeout(() => $gInput.focus(), 30);
+        $gInput.addEventListener('input', () => {
+          const typed = normalizeGuestName($gInput.value);
+          if ($gLabel) {
+            $gLabel.textContent = typed ? tr.playAsGuestNamedBtn(typed) : tr.playAsGuestBtn;
+          }
+        });
+      }
+      $gForm?.addEventListener('submit', (e) => {
+        e.preventDefault();
         playTone(660, 90, 'triangle');
-        this.saveActiveSession(profile.id, true);
+        const guestName = normalizeGuestName($gInput?.value);
+        this.saveActiveSession(profile.id, true, { guest_name: guestName });
         this.$dialog.close();
       });
       return;
@@ -3296,7 +4041,7 @@ export class PuffinLeaderboardElement extends BaseElement {
   async syncFromCloud() {
     try {
       const cfg = resolvePuffinConfig();
-      const res = await fetch(`${cfg.apiUrl}/scores?limit=50`);
+      const res = await fetch(`${cfg.apiUrl}/scores?limit=250`);
       if (!res.ok) return;
       const data = await res.json();
       if (!Array.isArray(data?.scores) || data.scores.length === 0) return;
@@ -3387,7 +4132,7 @@ export class PuffinLeaderboardElement extends BaseElement {
       const nameHtml =
         profile.role === 'bot'
           ? `<tt class="robot-tt">${profile.shortName}</tt>`
-          : profile.shortName;
+          : entry.shortName || profile.shortName;
 
       const rolePillHtml = `<span class="hof-role-pill">${profile.emoji || ''} ${profile.rpgClass || ''}</span>`;
       const summaryHtml = entry.summary_text
@@ -3518,6 +4263,8 @@ export class PuffinLeaderboardElement extends BaseElement {
 const _activeGameStarts = new Map();
 
 export const PuffinLogin = {
+  version: PUFFIN_LOGIN_VERSION,
+  VERSION: PUFFIN_LOGIN_VERSION,
   /**
    * Dedicated programmatic login for Antigravity UAT Bot ('bot' / 'saga').
    * Never selectable via human UI ("This is for bots not for you!").
@@ -3536,6 +4283,29 @@ export const PuffinLogin = {
       return el.getCurrentUser();
     }
     return botProfile;
+  },
+  /**
+   * Programmatic login as Guest with an optional bragging friend name (`guest_name: "Paolo"`).
+   */
+  loginAsGuest(guestName = null) {
+    const cleanGuest = normalizeGuestName(guestName);
+    const el = typeof document !== 'undefined' ? document.querySelector('puffin-login') : null;
+    if (el) {
+      el.saveActiveSession('guest', true, { guest_name: cleanGuest });
+      if (el.$dialog?.open) el.$dialog.close();
+      return el.getCurrentUser();
+    }
+    const session = validateAndNormalizeLoginPayload({
+      player_id: 'guest',
+      guest_name: cleanGuest,
+    });
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(STORAGE_KEYS.AUTH, JSON.stringify(session));
+        if (cleanGuest) localStorage.setItem(STORAGE_KEYS.GUEST_NAME, cleanGuest);
+      }
+    } catch {}
+    return this.getCurrentUser();
   },
   init(options = {}) {
     if (typeof window !== 'undefined') {
@@ -3569,11 +4339,107 @@ export const PuffinLogin = {
   },
 
   /**
-   * Returns the active logged-in profile, or `null` if unauthenticated (`identity === NULL`).
+   * Returns the active login session object (`{ id, player_id, userId, app_id, logged_at, source_ip, ip_address, hostname, device }`),
+   * or `null` if unauthenticated (`identity === NULL`).
+   */
+  getAuthSession() {
+    const el = typeof document !== 'undefined' ? document.querySelector('puffin-login') : null;
+    if (el) return el.getAuthSession();
+    try {
+      const raw = typeof localStorage !== 'undefined' && localStorage.getItem(STORAGE_KEYS.AUTH);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        const uid = parsed?.player_id || parsed?.userId;
+        if (uid) return validateAndNormalizeLoginPayload(parsed);
+      }
+    } catch {}
+    return null;
+  },
+
+  /**
+   * Returns the active logged-in profile (enriched with `source_ip`, `ip_address`, `hostname`, `device`, `logged_at`),
+   * or `null` if unauthenticated (`identity === NULL`).
    */
   getCurrentUser() {
-    const el = document.querySelector('puffin-login');
-    return el ? el.getCurrentUser() : null;
+    const el = typeof document !== 'undefined' ? document.querySelector('puffin-login') : null;
+    if (el) return el.getCurrentUser();
+    const session = this.getAuthSession();
+    if (!session?.userId) return null;
+    const found = PUFFIN_PROFILES.find((p) => p.id === session.userId);
+    if (!found) return null;
+    const guestName = found.id === 'guest' ? normalizeGuestName(session.guest_name) : null;
+    return {
+      ...found,
+      guest_name: guestName,
+      guestName,
+      displayName: guestName ? `${found.shortName} (${guestName})` : found.displayName,
+      shortName: guestName ? `${found.shortName} (${guestName})` : found.shortName,
+      loggedAt: session.loggedAt,
+      logged_at: session.logged_at,
+      appId: session.appId,
+      app_id: session.app_id,
+      source_ip: session.source_ip,
+      ip_address: session.ip_address,
+      ipAddress: session.ipAddress,
+      hostname: session.hostname,
+      device: session.device,
+    };
+  },
+
+  /**
+   * Returns local login history (sorted newest first) for dashboards.
+   */
+  getLoginHistory({ appId, app_id, game_id, playerId, player_id, userId, limit = 50 } = {}) {
+    const targetApp = app_id || game_id || appId;
+    const targetPlayer = player_id || playerId || userId;
+    try {
+      const raw = typeof localStorage !== 'undefined' && localStorage.getItem(STORAGE_KEYS.LOGINS);
+      const list = raw ? JSON.parse(raw) : [];
+      const arr = Array.isArray(list) ? list : [];
+      return arr
+        .map((item) => validateAndNormalizeLoginPayload(item))
+        .filter(
+          (item) =>
+            (!targetApp || item.app_id === targetApp) &&
+            (!targetPlayer || item.player_id === normalizeProfileId(targetPlayer))
+        )
+        .sort((a, b) => Date.parse(b.logged_at) - Date.parse(a.logged_at))
+        .slice(0, limit);
+    } catch {
+      return [];
+    }
+  },
+
+  /**
+   * Fetches and merges Cloud Firestore + local login events (with `source_ip` / `ip_address`) for dashboards.
+   */
+  async fetchCloudLogins({ appId, app_id, game_id, playerId, player_id, userId, limit = 50 } = {}) {
+    const targetApp = app_id || game_id || appId;
+    const targetPlayer = player_id || playerId || userId;
+    const localList = this.getLoginHistory({ appId: targetApp, playerId: targetPlayer, limit });
+    try {
+      const cfg = resolvePuffinConfig({ appId: targetApp });
+      const q = new URLSearchParams();
+      if (targetApp) q.set('app_id', targetApp);
+      if (targetPlayer) q.set('player_id', normalizeProfileId(targetPlayer));
+      if (limit) q.set('limit', String(limit));
+      const res = await fetch(`${cfg.apiUrl}/logins?${q.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data?.logins) && data.logins.length > 0) {
+          const byId = new Map();
+          for (const item of [...data.logins, ...localList]) {
+            if (item && item.id && !byId.has(item.id)) {
+              byId.set(item.id, validateAndNormalizeLoginPayload(item));
+            }
+          }
+          return Array.from(byId.values())
+            .sort((a, b) => Date.parse(b.logged_at) - Date.parse(a.logged_at))
+            .slice(0, limit);
+        }
+      }
+    } catch {}
+    return localList;
   },
 
   isLoggedIn() {
@@ -3629,12 +4495,32 @@ export const PuffinLogin = {
         ? activeUser.id
         : null;
 
+    const explicitGuestName =
+      payload.guest_name ??
+      payload.guestName ??
+      (payload.extra && (payload.extra.guest_name ?? payload.extra.guestName)) ??
+      (payload.metadata && (payload.metadata.guest_name ?? payload.metadata.guestName)) ??
+      (activeUser?.id === 'guest' ? activeUser.guest_name : null);
+
     const endIso = payload.ended_at || payload.endedAt || new Date().toISOString();
-    const fallbackDurSec = Number(payload.duration_sec ?? payload.durationSec) || 210;
+    const rawMeta = payload.extra || payload.metadata || {};
+    const explicitDurSec = Number(
+      payload.duration_sec ??
+        payload.durationSec ??
+        rawMeta.duration_sec ??
+        rawMeta.durationSec ??
+        rawMeta.seconds ??
+        rawMeta.timeSeconds ??
+        (rawMeta.durationMs !== undefined ? Math.round(Number(rawMeta.durationMs) / 1000) : NaN)
+    );
+    const hasExplicitDur = Number.isFinite(explicitDurSec) && explicitDurSec > 0;
+    const fallbackDurSec = hasExplicitDur ? Math.max(1, Math.round(explicitDurSec)) : 210;
     const startIso =
       payload.started_at ||
       payload.startedAt ||
-      _activeGameStarts.get(cfg.appId) ||
+      (hasExplicitDur
+        ? new Date(Date.parse(endIso) - fallbackDurSec * 1000).toISOString()
+        : _activeGameStarts.get(cfg.appId)) ||
       new Date(Date.parse(endIso) - fallbackDurSec * 1000).toISOString();
 
     _activeGameStarts.set(cfg.appId, new Date().toISOString());
@@ -3644,6 +4530,8 @@ export const PuffinLogin = {
         ...payload,
         game_id: cfg.appId,
         player_id: explicitPlayerId,
+        guest_name: explicitGuestName,
+        duration_sec: hasExplicitDur ? fallbackDurSec : payload.duration_sec,
         started_at: startIso,
         ended_at: endIso,
       },
@@ -3669,7 +4557,20 @@ export const PuffinLogin = {
       }).catch(() => {});
     } catch {}
 
-    window.dispatchEvent(new CustomEvent('puffin-score-recorded', { detail: normalized }));
+    if (!payload.skipCardDrop && (Number(normalized.score) || 0) > 0) {
+      this.unlockCard({
+        player_id: normalized.player_id || 'guest',
+        game_id: normalized.game_id,
+        score: normalized.score,
+        difficulty: normalized.extra?.difficulty || normalized.extra?.mode || payload.mode || '',
+        extra: normalized.extra,
+        showToast: payload.showCardToast !== false,
+      }).catch(() => {});
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('puffin-score-recorded', { detail: normalized }));
+    }
     return normalized;
   },
 
@@ -3750,7 +4651,263 @@ export const PuffinLogin = {
   syncRingFromVetrina() {
     return syncPuffinRingFromVetrina();
   },
+
+  getGameDashboard(gameId) {
+    const targetGame = gameId || resolvePuffinConfig().appId;
+    const list = ensureDummyScoresSeeded(false);
+    return computePerGameDashboard(list, targetGame);
+  },
+
+  async fetchCloudGameDashboard(gameId) {
+    const targetGame = gameId || resolvePuffinConfig().appId;
+    try {
+      const cfg = resolvePuffinConfig({ appId: targetGame });
+      const res = await fetch(
+        `${cfg.apiUrl}/dashboard?game_id=${encodeURIComponent(targetGame)}`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.ok && data.dashboard) return data.dashboard;
+      }
+    } catch {}
+    return this.getGameDashboard(targetGame);
+  },
+
+  getCardsCatalog(options = {}) {
+    return getPuffinCardsCatalog(options);
+  },
+
+  getUserCards({ player_id, playerId, userId, game_id, gameId } = {}) {
+    const targetPlayer = player_id || playerId || userId;
+    const targetGame = game_id || gameId;
+    const all = ensureDummyUserCardsSeeded(false);
+    return all.filter((uc) => {
+      if (
+        targetPlayer &&
+        targetPlayer !== 'ALL' &&
+        uc.player_id !== normalizeProfileId(targetPlayer)
+      ) {
+        return false;
+      }
+      if (
+        targetGame &&
+        targetGame !== 'ALL' &&
+        uc.game_id.toLowerCase() !== String(targetGame).toLowerCase()
+      ) {
+        return false;
+      }
+      return true;
+    });
+  },
+
+  async fetchCloudCards({ player_id, playerId, game_id, gameId } = {}) {
+    const targetPlayer = player_id || playerId;
+    const targetGame = game_id || gameId;
+    const localList = this.getUserCards({ player_id: targetPlayer, game_id: targetGame });
+    try {
+      const cfg = resolvePuffinConfig({ appId: targetGame });
+      const q = new URLSearchParams();
+      if (targetPlayer && targetPlayer !== 'ALL') q.set('player_id', normalizeProfileId(targetPlayer));
+      if (targetGame && targetGame !== 'ALL') q.set('game_id', targetGame);
+      const res = await fetch(`${cfg.apiUrl}/cards?${q.toString()}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data?.userCards) && data.userCards.length > 0) {
+          const byId = new Map();
+          for (const item of [...data.userCards, ...localList]) {
+            if (item && item.id && !byId.has(item.id)) {
+              byId.set(item.id, validateAndNormalizeUserCardRecord(item, normalizeProfileId));
+            }
+          }
+          const merged = Array.from(byId.values());
+          try {
+            if (typeof localStorage !== 'undefined' && !targetPlayer && !targetGame) {
+              localStorage.setItem(STORAGE_KEYS.CARDS, JSON.stringify(merged));
+            }
+          } catch {}
+          return merged;
+        }
+      }
+    } catch {}
+    return localList;
+  },
+
+  async unlockCard(payload = {}) {
+    const activeUser = this.getCurrentUser();
+    const resolvedPlayer =
+      normalizeProfileId(
+        payload.player_id ?? payload.playerId ?? payload.userId ?? activeUser?.id ?? 'guest',
+        false
+      ) || 'guest';
+    const gameId = String(
+      payload.game_id || payload.gameId || payload.appId || resolvePuffinConfig().appId || 'tubature'
+    )
+      .trim()
+      .toLowerCase();
+
+    let dropMeta = null;
+    let targetCardId = payload.card_id || payload.cardId || '';
+    if (!targetCardId) {
+      dropMeta = rollPuffinCardDrop({
+        game_id: gameId,
+        score: payload.score,
+        difficulty: payload.difficulty || payload.mode,
+        extra: payload.extra,
+      });
+      targetCardId = dropMeta.card.card_id;
+    }
+
+    const localResult = unlockPuffinCardLocal({
+      player_id: resolvedPlayer,
+      card_id: targetCardId,
+      game_id: gameId,
+      score: payload.score,
+    });
+
+    try {
+      const cfg = resolvePuffinConfig({ appId: gameId });
+      fetch(`${cfg.apiUrl}/cards/unlock`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          player_id: resolvedPlayer,
+          card_id: targetCardId,
+          game_id: gameId,
+          score: payload.score || 0,
+          difficulty: payload.difficulty || '',
+        }),
+      }).catch(() => {});
+    } catch {}
+
+    const fullResult = {
+      ok: true,
+      ...localResult,
+      meritDowngraded: Boolean(dropMeta?.meritDowngraded),
+      rolledRarity: dropMeta?.rolledRarity || localResult.card.rarity,
+    };
+
+    if (payload.showToast !== false && typeof window !== 'undefined') {
+      showPuffinCardRevealToast(fullResult);
+    }
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('puffin-card-unlocked', { detail: fullResult }));
+    }
+    return fullResult;
+  },
+
+  resetDummyCards() {
+    return ensureDummyUserCardsSeeded(true);
+  },
+
+  getFamilyInsights(options = {}) {
+    const scores = options.scores || ensureDummyScoresSeeded(false);
+    const userCards = options.userCards || ensureDummyUserCardsSeeded(false);
+    return computeFamilyInsights({
+      scores,
+      userCards,
+      profiles: PUFFIN_PROFILES,
+      ringApps: getPuffinRingApps({ includeCandidates: true }),
+    });
+  },
+
+  async fetchCloudInsights() {
+    try {
+      const cfg = resolvePuffinConfig();
+      const res = await fetch(`${cfg.apiUrl}/insights`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.ok && data.insights) return data.insights;
+      }
+    } catch {}
+    return this.getFamilyInsights();
+  },
+
+  comparePlayers(playerAId = 'ale', playerBId = 'seby', customInsights = null) {
+    const insights = customInsights || this.getFamilyInsights();
+    return compareFamilyRivals(insights, playerAId, playerBId);
+  },
 };
+
+export function computeFamilyInsights(options = {}) {
+  return computeFamilyInsightsRaw({
+    scores: options.scores || DEFAULT_DUMMY_SCORES,
+    userCards: options.userCards || DEFAULT_DUMMY_USER_CARDS,
+    profiles: options.profiles || PUFFIN_PROFILES,
+    ringApps: options.ringApps || getPuffinRingApps({ includeCandidates: true }),
+  });
+}
+
+export function ensureDummyUserCardsSeeded(forceReset = false) {
+  const seeds = DEFAULT_DUMMY_USER_CARDS.map((uc) =>
+    validateAndNormalizeUserCardRecord(uc, normalizeProfileId)
+  );
+  try {
+    if (typeof localStorage === 'undefined') return seeds;
+    const raw = localStorage.getItem(STORAGE_KEYS.CARDS);
+    const existing = raw ? JSON.parse(raw) : [];
+    if (forceReset || !Array.isArray(existing) || existing.length === 0) {
+      localStorage.setItem(STORAGE_KEYS.CARDS, JSON.stringify(seeds));
+      return seeds;
+    }
+    return existing.map((uc) => validateAndNormalizeUserCardRecord(uc, normalizeProfileId));
+  } catch {
+    return seeds;
+  }
+}
+
+export function unlockPuffinCardLocal({
+  player_id = 'guest',
+  card_id = 'tubature:ruby',
+  game_id = 'tubature',
+  score = 0,
+} = {}) {
+  const cleanPlayer = normalizeProfileId(player_id, false) || 'guest';
+  const cleanCardId = normalizeCardId(card_id, game_id);
+  const cardMeta = getCardById(cleanCardId, game_id);
+  const nowIso = new Date().toISOString();
+  const list = ensureDummyUserCardsSeeded(false);
+
+  const idx = list.findIndex(
+    (item) => item.player_id === cleanPlayer && item.card_id === cardMeta.card_id
+  );
+  let record;
+  let isNew = true;
+  if (idx >= 0) {
+    isNew = false;
+    const prev = list[idx];
+    record = {
+      ...prev,
+      count: (Number(prev.count) || 1) + 1,
+      last_unlocked_at: nowIso,
+      best_score_context: Math.max(Number(prev.best_score_context) || 0, Number(score) || 0),
+    };
+    list[idx] = record;
+  } else {
+    record = validateAndNormalizeUserCardRecord(
+      {
+        player_id: cleanPlayer,
+        card_id: cardMeta.card_id,
+        game_id: cardMeta.game_id,
+        rarity: cardMeta.rarity,
+        count: 1,
+        first_unlocked_at: nowIso,
+        last_unlocked_at: nowIso,
+        best_score_context: Number(score) || 0,
+      },
+      normalizeProfileId
+    );
+    list.push(record);
+  }
+
+  try {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(STORAGE_KEYS.CARDS, JSON.stringify(list));
+    }
+  } catch {}
+
+  return { card: cardMeta, ownership: record, isNew };
+}
 
 const RING_CSS = `
 :host {
@@ -4227,6 +5384,423 @@ export class PuffinRingElement extends BaseElement {
   }
 }
 
+export const PuffinCardsElement = createPuffinCardsElementClass({
+  BaseElementClass: BaseElement,
+  getPuffinLoginApi: () => PuffinLogin,
+  getProfileByIdFn: getProfileById,
+});
+
+const GAME_DASHBOARD_CSS = `
+:host {
+  display: block;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: #f8fafc;
+}
+.gd-wrap {
+  background: #13182e;
+  border: 1.5px solid rgba(255, 255, 255, 0.13);
+  border-radius: 1.2rem;
+  padding: 1.15rem;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.55);
+}
+.gd-header {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.9rem;
+}
+.gd-title {
+  margin: 0;
+  font-size: 1.18rem;
+  font-weight: 900;
+}
+.gd-sub {
+  margin: 0.2rem 0 0;
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+.gd-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+.gd-pill {
+  background: #0b0e1d;
+  color: #cbd5e1;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  padding: 0.36rem 0.78rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.gd-pill:hover {
+  border-color: #facc15;
+  color: #fff;
+}
+.gd-pill.active {
+  background: #facc15;
+  color: #090b14;
+  border-color: #facc15;
+  box-shadow: 0 2px 12px rgba(250, 204, 21, 0.4);
+}
+.gd-highlights {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.1rem;
+}
+.gd-kpi {
+  background: rgba(11, 14, 29, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 0.9rem;
+  padding: 0.75rem 0.9rem;
+}
+.gd-kpi-label {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.gd-kpi-val {
+  margin-top: 0.25rem;
+  font-size: 1.02rem;
+  font-weight: 900;
+  color: #fef08a;
+}
+.gd-section-title {
+  margin: 1.1rem 0 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: #fde047;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.gd-table-wrap {
+  overflow-x: auto;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  background: #0b0e1d;
+}
+table.gd-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.81rem;
+  text-align: left;
+}
+table.gd-table th {
+  background: rgba(255, 255, 255, 0.05);
+  color: #94a3b8;
+  font-weight: 800;
+  padding: 0.58rem 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
+}
+table.gd-table td {
+  padding: 0.58rem 0.75rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  vertical-align: middle;
+}
+table.gd-table tr:last-child td {
+  border-bottom: none;
+}
+.gd-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.16rem 0.55rem;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 0.75rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--hero-color, #facc15);
+  color: #fff;
+}
+.gd-mode-tag {
+  font-family: monospace;
+  font-weight: 900;
+  font-size: 0.82rem;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.12);
+  padding: 0.18rem 0.5rem;
+  border-radius: 0.45rem;
+}
+`;
+
+export function renderPerGameDashboardHtml(dashboard, activeGameId = 'carlesso-fotoquad') {
+  const dash =
+    dashboard && dashboard.bySubMode
+      ? dashboard
+      : computePerGameDashboard(ensureDummyScoresSeeded(false), activeGameId);
+  const subEntries = Object.values(dash.bySubMode || {});
+  const gridEntries = Object.values(dash.byGrid || {});
+  const timeRows = gridEntries.length > 0 ? gridEntries : subEntries;
+  const playerEntries = Object.values(dash.byPlayer || {}).sort(
+    (a, b) => b.bestScore - a.bestScore
+  );
+
+  const fmtSec = (sec) => {
+    const s = Number(sec) || 0;
+    if (s <= 0) return '—';
+    const m = Math.floor(s / 60);
+    const r = s % 60;
+    return m > 0 ? `${m}m ${r}s (${s}s)` : `${s}s`;
+  };
+
+  const champRowsHtml = subEntries
+    .map((b) => {
+      const c = b.champion;
+      const f = b.fastestPlayer;
+      const podiumStr = (b.podium || [])
+        .map((p, i) => `${i === 0 ? '🥇' : i === 1 ? '🥈' : '🥉'} ${p.shortName} (${p.score})`)
+        .join(' • ');
+      return `
+        <tr data-submode="${b.key}">
+          <td><span class="gd-mode-tag">${b.label.toUpperCase()}</span></td>
+          <td>${
+            c
+              ? `<span class="gd-badge" style="--hero-color:${c.colorHex}">👑 ${c.emoji} ${c.shortName} — <strong>${c.score} pt</strong></span>`
+              : '—'
+          }</td>
+          <td>${
+            f
+              ? `<span class="gd-badge" style="--hero-color:${f.colorHex}">⚡ ${f.emoji} ${f.shortName} — <strong>${fmtSec(f.duration_sec)}</strong></span>`
+              : '—'
+          }</td>
+          <td>${podiumStr || '—'}</td>
+          <td><strong>${b.totalMatches}</strong></td>
+        </tr>
+      `;
+    })
+    .join('');
+
+  const timeRowsHtml = timeRows
+    .map((b) => {
+      const d = b.durationStats || {};
+      const f = b.fastestPlayer;
+      const perHeroStr = Object.values(b.byPlayer || {})
+        .map((p) => `${p.emoji} ${p.shortName}: avg ${p.avgDurationSec}s (best ${p.bestDurationSec}s)`)
+        .join(' • ');
+      return `
+        <tr data-time-row="${b.key}">
+          <td><span class="gd-mode-tag">${b.label.toUpperCase()}</span></td>
+          <td><strong>${fmtSec(d.avgSec)}</strong></td>
+          <td>${
+            f
+              ? `⚡ <strong>${fmtSec(d.minSec)}</strong> (${f.emoji} ${f.shortName})`
+              : fmtSec(d.minSec)
+          }</td>
+          <td>${fmtSec(d.medianSec)}</td>
+          <td>${b.efficiencyStats?.minMoves ?? '—'} / ${b.efficiencyStats?.minHints ?? '—'}</td>
+          <td style="font-size:0.74rem;color:#cbd5e1;">${perHeroStr || '—'}</td>
+        </tr>
+      `;
+    })
+    .join('');
+
+  const playerRowsHtml = playerEntries
+    .map(
+      (p) => `
+        <tr data-player-row="${p.player_id || 'null'}">
+          <td><span class="gd-badge" style="--hero-color:${p.colorHex}">${p.emoji} ${p.shortName}</span></td>
+          <td><strong>${p.matches}</strong></td>
+          <td><strong>${p.bestScore} pt</strong></td>
+          <td>${p.avgScore} pt</td>
+          <td>⚡ ${fmtSec(p.bestDurationSec)}</td>
+          <td>${fmtSec(p.avgDurationSec)}</td>
+          <td>${p.minMoves ?? '—'}</td>
+          <td>${p.minHints ?? '—'}</td>
+        </tr>
+      `
+    )
+    .join('');
+
+  const overallChamp = dash.overall?.champion;
+  const overallFastest = dash.overall?.fastestPlayer;
+
+  return `
+    <div class="gd-highlights">
+      <div class="gd-kpi">
+        <div class="gd-kpi-label">🎮 Gioco Selezionato</div>
+        <div class="gd-kpi-val">${dash.game_id} (${dash.totalMatches} partite)</div>
+      </div>
+      <div class="gd-kpi">
+        <div class="gd-kpi-label">👑 Campione Assoluto</div>
+        <div class="gd-kpi-val">${
+          overallChamp
+            ? `${overallChamp.emoji} ${overallChamp.shortName} (${overallChamp.score} pt)`
+            : '—'
+        }</div>
+      </div>
+      <div class="gd-kpi">
+        <div class="gd-kpi-label">⚡ Record Velocità</div>
+        <div class="gd-kpi-val">${
+          overallFastest
+            ? `${overallFastest.emoji} ${overallFastest.shortName} (${fmtSec(overallFastest.duration_sec)})`
+            : '—'
+        }</div>
+      </div>
+      <div class="gd-kpi">
+        <div class="gd-kpi-label">⏱️ Tempo Medio Globale</div>
+        <div class="gd-kpi-val">${fmtSec(dash.overall?.durationStats?.avgSec)}</div>
+      </div>
+    </div>
+
+    <div class="gd-section-title">🏆 Tabella 1 — Campioni per Difficoltà / Modalità (es. FotoQuad Facile vs Medio vs Difficile)</div>
+    <div class="gd-table-wrap">
+      <table class="gd-table" id="gd-champions-table">
+        <thead>
+          <tr>
+            <th>Difficoltà / Griglia</th>
+            <th>👑 Campione Punteggio (#1)</th>
+            <th>⚡ Campione Velocità (Min Tempo)</th>
+            <th>Podio Famiglia (🥇 🥈 🥉)</th>
+            <th>Partite</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${champRowsHtml || '<tr><td colspan="5">Nessuna partita registrata</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="gd-section-title">⏱️ Tabella 2 — Tempi di Completamento Medi, Minimi e Mediani per Griglia / Livello (es. Kids Jigsaw 6x6 vs 7x7)</div>
+    <div class="gd-table-wrap">
+      <table class="gd-table" id="gd-times-table">
+        <thead>
+          <tr>
+            <th>Griglia / Modalità</th>
+            <th>⏱️ Tempo Medio</th>
+            <th>⚡ Tempo Minimo (Record)</th>
+            <th>📊 Mediana</th>
+            <th>🎯 Min Mosse / Min Hints</th>
+            <th>👨‍👩‍👦‍👦 Tempi Medi per Giocatore</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${timeRowsHtml || '<tr><td colspan="6">Nessun dato temporale</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="gd-section-title">🎯 Tabella 3 — Efficienza & Statistiche per Eroe di Famiglia</div>
+    <div class="gd-table-wrap">
+      <table class="gd-table" id="gd-players-table">
+        <thead>
+          <tr>
+            <th>Eroe</th>
+            <th>Partite</th>
+            <th>Best Score</th>
+            <th>Media Score</th>
+            <th>Miglior Tempo</th>
+            <th>Tempo Medio</th>
+            <th>Min Mosse</th>
+            <th>Min Aiuti (Hints)</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${playerRowsHtml || '<tr><td colspan="8">Nessun giocatore</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+export class PuffinGameDashboardElement extends BaseElement {
+  static get observedAttributes() {
+    return ['game-id'];
+  }
+
+  constructor() {
+    super();
+    this.attachShadow({ mode: 'open' });
+    const styleEl = document.createElement('style');
+    styleEl.textContent = GAME_DASHBOARD_CSS;
+    this.shadowRoot.append(styleEl);
+    this.$root = document.createElement('div');
+    this.$root.className = 'gd-wrap';
+    this.shadowRoot.append(this.$root);
+    this.activeGameId = this.getAttribute('game-id') || 'carlesso-fotoquad';
+    this._onUpdate = () => this.refresh();
+  }
+
+  connectedCallback() {
+    this.activeGameId = this.getAttribute('game-id') || 'carlesso-fotoquad';
+    window.addEventListener('puffin-score-recorded', this._onUpdate);
+    this.refresh();
+  }
+
+  disconnectedCallback() {
+    window.removeEventListener('puffin-score-recorded', this._onUpdate);
+  }
+
+  attributeChangedCallback(name, _oldVal, newVal) {
+    if (name === 'game-id' && newVal && this.isConnected) {
+      this.activeGameId = newVal;
+      this.refresh();
+    }
+  }
+
+  async refresh() {
+    const dash = await PuffinLogin.fetchCloudGameDashboard(this.activeGameId);
+    this.render(dash);
+  }
+
+  render(dashData) {
+    const games = [
+      { id: 'carlesso-fotoquad', label: '📸 FotoQuad (Facile / Medio / Difficile)' },
+      { id: 'kids-jigsaw-puzzle', label: '🧩 Kids Jigsaw (6x6 / 7x7 / Griglie)' },
+      { id: 'tubature', label: '🚰 Tubature' },
+      { id: 'puffin-snake', label: '🐍 Puffin Snake' },
+      { id: 'carchess3d', label: '♟️ CarChess 3D' },
+      { id: 'smurfs-and-dragons', label: '🐉 Smurfs & Dragons' },
+      { id: 'family-mahjong-3d', label: '🀄 3D Mahjong' },
+      { id: 'ale-french', label: '🇫🇷 Ale French' },
+      { id: 'pupurabbu-3d', label: '🐰 Pupurabbu 3D' },
+    ];
+
+    const pillsHtml = games
+      .map(
+        (g) => `
+          <button type="button" class="gd-pill ${
+            g.id === this.activeGameId ? 'active' : ''
+          }" data-game-pill="${g.id}">
+            ${g.label}
+          </button>
+        `
+      )
+      .join('');
+
+    const bodyHtml = renderPerGameDashboardHtml(dashData, this.activeGameId);
+
+    this.$root.innerHTML = `
+      <div class="gd-header">
+        <div>
+          <h2 class="gd-title">📊 Per-Game Family Dashboard & Deep Telemetry</h2>
+          <p class="gd-sub">Campioni per difficoltà (FotoQuad facile/medio/difficile) & tempi medi per griglia (Kids Jigsaw 6x6 vs 7x7)</p>
+        </div>
+      </div>
+      <div class="gd-pills" role="tablist" aria-label="Seleziona gioco">
+        ${pillsHtml}
+      </div>
+      ${bodyHtml}
+    `;
+
+    this.$root.querySelectorAll('[data-game-pill]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        this.activeGameId = btn.getAttribute('data-game-pill');
+        this.setAttribute('game-id', this.activeGameId);
+      });
+    });
+  }
+}
+
 if (typeof customElements !== 'undefined') {
   if (!customElements.get('puffin-login')) {
     customElements.define('puffin-login', PuffinLoginElement);
@@ -4236,6 +5810,12 @@ if (typeof customElements !== 'undefined') {
   }
   if (!customElements.get('puffin-ring')) {
     customElements.define('puffin-ring', PuffinRingElement);
+  }
+  if (!customElements.get('puffin-cards')) {
+    customElements.define('puffin-cards', PuffinCardsElement);
+  }
+  if (!customElements.get('puffin-game-dashboard')) {
+    customElements.define('puffin-game-dashboard', PuffinGameDashboardElement);
   }
 }
 

@@ -167,16 +167,22 @@
           base + (d.photos || 1) * 300 - (d.moves || 0) * 8 - (d.hints || 0) * 100 + speedBonus,
         );
         try {
+          const levelSlug = String(d.level || 'medio').toLowerCase();
           await PuffinLogin.submitScore({
             game_id: 'carlesso-fotoquad',
             score: computedScore,
-            summary_text: `Completed ${d.photos || 6} family photos on ${d.level || 'medio'} mode in ${d.moves || 10} moves (${seconds}s)!`,
+            duration_sec: seconds,
+            mode: levelSlug,
+            summary_text: `Completed ${d.photos || 6} family photos on ${levelSlug} mode in ${d.moves || 10} moves (${seconds}s)!`,
             extra: {
-              level: d.level || 'medio',
+              difficulty: levelSlug,
+              level: levelSlug,
+              mode: levelSlug,
               photos: d.photos || 0,
               moves: d.moves || 0,
               hints: d.hints || 0,
               seconds,
+              duration_sec: seconds,
               new_record: Boolean(d.newRecord),
             },
           });
